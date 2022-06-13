@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultResponse = "Thanks for reaching out! Depending on the time of day or day of the week it may take some time for someone to get back to you. If this is a topic that you'd like the SPLAT team to specifically research, please create a [card](https://issues.redhat.com/secure/RapidBoard.jspa?rapidView=5962&projectKey=SPLAT) and we will be happy to investigate.\nThings you can do to help:\n- Provide a clear description of the problem, topic, or question.\n- If describing a problem, please provide logs. Snippets containing error messages rarely contain the context needed to provide a meaningful answer."
+	defaultResponse = "I'm just a bot, if you want to reach the SPLAT team you can message @splat-team, reach out in #forum-splat, or open a card on our <https://issues.redhat.com/secure/RapidBoard.jspa?projectKey=SPLAT&rapidView=5962|board>. "
 )
 
 type messagePoster interface {
@@ -52,7 +52,7 @@ func responseFor(message string) []slack.Block {
 		blocks = append(blocks, &slack.SectionBlock{
 			Type: slack.MBTSection,
 			Text: &slack.TextBlockObject{
-				Type: slack.PlainTextType,
+				Type: slack.MarkdownType,
 				//Text: "Sorry, I don't know how to help with that. Here are all the things I know how to do:",
 				Text: defaultResponse,
 			},
