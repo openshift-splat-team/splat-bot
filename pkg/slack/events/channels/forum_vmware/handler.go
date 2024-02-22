@@ -63,7 +63,7 @@ var (
 			Operator: events.RESPONSE_OPERATOR_OR,
 			Response: "Hey! You mentioned SPLAT.  If it's urgent you can message @splat-team and we'll respond if able. " +
 				"If there is something you'd like us to research or follow up on, feel free to create a card on our <https://issues.redhat.com/secure/RapidBoard.jspa?projectKey=SPLAT&rapidView=5962|board>.",
-			RequiresChannelTag: false,
+			RequiresChannelTag: true,
 		},
 	}
 )

@@ -112,6 +112,7 @@ func main() {
 		logrus.WithError(err).Fatal("Error starting secrets agent.")
 	}
 
+	logrus.Info("getting slack client")
 	slackClient := slack.New(string(secret.GetSecret(o.slackTokenPath)))
 
 	metrics.ExposeMetrics("slack-bot", config.PushGateway{}, o.instrumentationOptions.MetricsPort)
@@ -134,6 +135,7 @@ func main() {
 	mux.Handle("/slack/events-endpoint", handler(handleEvent(secret.GetTokenGenerator(o.slackSigningSecretPath), eventrouter.ForEvents(slackClient))))
 	server := &http.Server{Addr: ":" + strconv.Itoa(o.port), Handler: mux}
 
+	logrus.Info("serve ready")
 	health.ServeReady()
 
 	interrupts.ListenAndServe(server, o.gracePeriod)
@@ -174,7 +176,7 @@ func handleEvent(signingSecret func() []byte, handler eventhandler.Handler) http
 		//body, err := ioutil.ReadAll(request.Body)
 		//spew.Dump(string(body))
 		logger := logrus.WithField("api", "events")
-		logger.Debug("Got an event payload.")
+		logger.Info("Got an event payload.")
 		body, ok := verifiedBody(logger, request, signingSecret)
 		if !ok {
 			writer.WriteHeader(http.StatusInternalServerError)

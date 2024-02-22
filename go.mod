@@ -1,6 +1,6 @@
 module github.com/openshift-eng/splat-sandbox
 
-go 1.18
+go 1.20
 
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v14.2.0+incompatible
@@ -26,13 +26,14 @@ replace (
 
 require (
 	github.com/andygrunwald/go-jira v1.14.0
+	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/google/go-cmp v0.5.7
+	github.com/james-bowman/nlp v0.0.0-20210511120306-26d441fa0ded
 	github.com/openshift/ci-tools v0.0.0-20220609120027-dccc18596560
 	github.com/sirupsen/logrus v1.8.1
 	github.com/slack-go/slack v0.10.3
-	k8s.io/apimachinery v0.22.2
+	gonum.org/v1/gonum v0.8.2
 	k8s.io/test-infra v0.0.0-20220519160727-e2358f85de1e
-	sigs.k8s.io/yaml v1.2.0
 )
 
 require (
@@ -118,20 +119,22 @@ require (
 	cloud.google.com/go v0.81.0 // indirect
 	cloud.google.com/go/storage v1.12.0 // indirect
 	github.com/GoogleCloudPlatform/testgrid v0.0.123 // indirect
+	github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310 // indirect
 	github.com/denormal/go-gitignore v0.0.0-20180930084346-ae8ad1d07817 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
 	github.com/google/gofuzz v1.2.1-0.20210504230335-f78f29fc09ea // indirect
 	github.com/hashicorp/go-retryablehttp v0.6.6 // indirect
+	github.com/james-bowman/sparse v0.0.0-20210729090128-1e6c7dd483e9 // indirect
 	github.com/mattn/go-zglob v0.0.2 // indirect
-	github.com/openshift/api v0.0.0-20210730095913-85e1d547cdee // indirect
-	github.com/openshift/hive/apis v0.0.0-20220308072022-688681d11095 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.26.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
+	github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	google.golang.org/api v0.44.0 // indirect
@@ -140,8 +143,10 @@ require (
 	gopkg.in/robfig/cron.v2 v2.0.0-20150107220207-be2e0b0deed5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.22.2 // indirect
+	k8s.io/apimachinery v0.22.2 // indirect
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible // indirect
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
 	sigs.k8s.io/controller-runtime v0.10.3 // indirect
+	sigs.k8s.io/yaml v1.2.0 // indirect
 )

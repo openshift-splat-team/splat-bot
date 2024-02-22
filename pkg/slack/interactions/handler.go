@@ -18,6 +18,7 @@ type handler struct {
 }
 
 func (h *handler) Handle(callback *slack.InteractionCallback, logger *logrus.Entry) (output []byte, err error) {
+	logger.Infof("%v", callback)
 	return h.handle(callback, logger)
 }
 func (h *handler) Identifier() string {
