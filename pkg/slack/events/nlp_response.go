@@ -3,8 +3,9 @@ package events
 import (
 	"errors"
 	"fmt"
-	"github.com/openshift-eng/splat-sandbox/pkg/slack/data"
 	"os"
+
+	"github.com/openshift-eng/splat-sandbox/pkg/slack/data"
 
 	"github.com/go-yaml/yaml"
 	"github.com/james-bowman/nlp"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	ResponsesFile = "/home/rvanderp/mnt/home/rvanderp/code/splat-bot/responses.yaml"
+	ResponsesFile = "./responses.yaml"
 )
 
 var (
