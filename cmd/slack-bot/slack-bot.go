@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -18,7 +18,6 @@ import (
 	"k8s.io/test-infra/prow/config"
 	"k8s.io/test-infra/prow/config/secret"
 	prowflagutil "k8s.io/test-infra/prow/flagutil"
-	configflagutil "k8s.io/test-infra/prow/flagutil/config"
 	"k8s.io/test-infra/prow/interrupts"
 	"k8s.io/test-infra/prow/logrusutil"
 	"k8s.io/test-infra/prow/metrics"
@@ -28,7 +27,6 @@ import (
 
 	eventhandler "github.com/openshift-eng/splat-sandbox/pkg/slack/events"
 	eventrouter "github.com/openshift-eng/splat-sandbox/pkg/slack/events/router"
-	interactionhandler "github.com/openshift-eng/splat-sandbox/pkg/slack/interactions"
 )
 
 type options struct {
@@ -38,8 +36,6 @@ type options struct {
 	gracePeriod            time.Duration
 	instrumentationOptions prowflagutil.InstrumentationOptions
 	jiraOptions            prowflagutil.JiraOptions
-
-	prowconfig configflagutil.ConfigOptions
 
 	slackTokenPath         string
 	slackSigningSecretPath string
@@ -135,7 +131,6 @@ func main() {
 	mux.Handle("/slack/events-endpoint", handler(handleEvent(secret.GetTokenGenerator(o.slackSigningSecretPath), eventrouter.ForEvents(slackClient))))
 	server := &http.Server{Addr: ":" + strconv.Itoa(o.port), Handler: mux}
 
-	logrus.Info("serve ready")
 	health.ServeReady()
 
 	interrupts.ListenAndServe(server, o.gracePeriod)
@@ -149,14 +144,14 @@ func verifiedBody(logger *logrus.Entry, request *http.Request, signingSecret fun
 		return nil, false
 	}
 
-	body, err := ioutil.ReadAll(request.Body)
+	body, err := io.ReadAll(request.Body)
 	if err != nil {
 		logger.WithError(err).Error("Failed to read an event payload.")
 		return nil, false
 	}
 
 	// need to use body again when unmarshalling
-	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	request.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	if _, err := verifier.Write(body); err != nil {
 		logger.WithError(err).Error("Failed to hash an event payload.")
@@ -176,7 +171,7 @@ func handleEvent(signingSecret func() []byte, handler eventhandler.Handler) http
 		//body, err := ioutil.ReadAll(request.Body)
 		//spew.Dump(string(body))
 		logger := logrus.WithField("api", "events")
-		logger.Info("Got an event payload.")
+		logger.Debug("Got an event payload.")
 		body, ok := verifiedBody(logger, request, signingSecret)
 		if !ok {
 			writer.WriteHeader(http.StatusInternalServerError)
@@ -218,7 +213,7 @@ func handleEvent(signingSecret func() []byte, handler eventhandler.Handler) http
 	}
 }
 
-func handleInteraction(signingSecret func() []byte, handler interactionhandler.Handler) http.HandlerFunc {
+/*func handleInteraction(signingSecret func() []byte, handler interactionhandler.Handler) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		logger := logrus.WithField("api", "interactionhandler")
 		logger.Debug("Got an interaction payload.")
@@ -260,4 +255,4 @@ func fieldsFor(interactionCallback *slack.InteractionCallback) logrus.Fields {
 		"action_id":   interactionCallback.ActionID,
 		"type":        interactionCallback.Type,
 	}
-}
+}*/

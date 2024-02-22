@@ -9,4 +9,4 @@ RUN go mod tidy && go mod vendor
 
 RUN ./hack/build.sh
 
-CMD ["./slack-bot" , "--slack-token-path", "$SLACK_BOT_TOKEN", "--slack-signing-secret-path", "$SLACK_BOT_SECRET"]
+CMD ["./slack-bot" , "--slack-token-path", "/creds/token", "--slack-signing-secret-path", "/creds/secret"]
