@@ -9,8 +9,14 @@ const (
 	METOverflow       MessageElementType = "overflow"
 	METDatepicker     MessageElementType = "datepicker"
 	METTimepicker     MessageElementType = "timepicker"
+	METDatetimepicker MessageElementType = "datetimepicker"
 	METPlainTextInput MessageElementType = "plain_text_input"
 	METRadioButtons   MessageElementType = "radio_buttons"
+	METRichTextInput  MessageElementType = "rich_text_input"
+	METEmailTextInput MessageElementType = "email_text_input"
+	METURLTextInput   MessageElementType = "url_text_input"
+	METNumber         MessageElementType = "number_input"
+	METFileInput      MessageElementType = "file_input"
 
 	MixedElementImage MixedElementType = "mixed_image"
 	MixedElementText  MixedElementType = "mixed_text"
@@ -47,6 +53,7 @@ type Accessory struct {
 	DatePickerElement          *DatePickerBlockElement
 	TimePickerElement          *TimePickerBlockElement
 	PlainTextInputElement      *PlainTextInputBlockElement
+	RichTextInputElement       *RichTextInputBlockElement
 	RadioButtonsElement        *RadioButtonsBlockElement
 	SelectElement              *SelectBlockElement
 	MultiSelectElement         *MultiSelectBlockElement
@@ -69,6 +76,8 @@ func NewAccessory(element BlockElement) *Accessory {
 		return &Accessory{TimePickerElement: element.(*TimePickerBlockElement)}
 	case *PlainTextInputBlockElement:
 		return &Accessory{PlainTextInputElement: element.(*PlainTextInputBlockElement)}
+	case *RichTextInputBlockElement:
+		return &Accessory{RichTextInputElement: element.(*RichTextInputBlockElement)}
 	case *RadioButtonsBlockElement:
 		return &Accessory{RadioButtonsElement: element.(*RadioButtonsBlockElement)}
 	case *SelectBlockElement:
@@ -170,6 +179,12 @@ func (s *ButtonBlockElement) WithStyle(style Style) *ButtonBlockElement {
 // WithConfirm adds a confirmation dialogue to the button object and returns the modified ButtonBlockElement
 func (s *ButtonBlockElement) WithConfirm(confirm *ConfirmationBlockObject) *ButtonBlockElement {
 	s.Confirm = confirm
+	return s
+}
+
+// WithURL adds a URL for the button to link to and returns the modified ButtonBlockElement
+func (s *ButtonBlockElement) WithURL(url string) *ButtonBlockElement {
+	s.URL = url
 	return s
 }
 
@@ -389,6 +404,87 @@ func NewTimePickerBlockElement(actionID string) *TimePickerBlockElement {
 	}
 }
 
+// DateTimePickerBlockElement defines an element that allows the selection of both
+// a date and a time of day formatted as a UNIX timestamp.
+// More Information: https://api.slack.com/reference/messaging/block-elements#datetimepicker
+type DateTimePickerBlockElement struct {
+	Type            MessageElementType       `json:"type"`
+	ActionID        string                   `json:"action_id,omitempty"`
+	InitialDateTime int64                    `json:"initial_date_time,omitempty"`
+	Confirm         *ConfirmationBlockObject `json:"confirm,omitempty"`
+}
+
+// ElementType returns the type of the Element
+func (s DateTimePickerBlockElement) ElementType() MessageElementType {
+	return s.Type
+}
+
+// NewDatePickerBlockElement returns an instance of a datetime picker element
+func NewDateTimePickerBlockElement(actionID string) *DateTimePickerBlockElement {
+	return &DateTimePickerBlockElement{
+		Type:     METDatetimepicker,
+		ActionID: actionID,
+	}
+}
+
+// EmailTextInputBlockElement creates a field where a user can enter email
+// data.
+// email-text-input elements are currently only available in modals.
+//
+// More Information: https://api.slack.com/reference/block-kit/block-elements#email
+type EmailTextInputBlockElement struct {
+	Type                 MessageElementType    `json:"type"`
+	ActionID             string                `json:"action_id,omitempty"`
+	Placeholder          *TextBlockObject      `json:"placeholder,omitempty"`
+	InitialValue         string                `json:"initial_value,omitempty"`
+	DispatchActionConfig *DispatchActionConfig `json:"dispatch_action_config,omitempty"`
+	FocusOnLoad          bool                  `json:"focus_on_load,omitempty"`
+}
+
+// ElementType returns the type of the Element
+func (s EmailTextInputBlockElement) ElementType() MessageElementType {
+	return s.Type
+}
+
+// NewEmailTextInputBlockElement returns an instance of a plain-text input
+// element
+func NewEmailTextInputBlockElement(placeholder *TextBlockObject, actionID string) *EmailTextInputBlockElement {
+	return &EmailTextInputBlockElement{
+		Type:        METEmailTextInput,
+		ActionID:    actionID,
+		Placeholder: placeholder,
+	}
+}
+
+// URLTextInputBlockElement creates a field where a user can enter url data.
+//
+// url-text-input elements are currently only available in modals.
+//
+// More Information: https://api.slack.com/reference/block-kit/block-elements#url
+type URLTextInputBlockElement struct {
+	Type                 MessageElementType    `json:"type"`
+	ActionID             string                `json:"action_id,omitempty"`
+	Placeholder          *TextBlockObject      `json:"placeholder,omitempty"`
+	InitialValue         string                `json:"initial_value,omitempty"`
+	DispatchActionConfig *DispatchActionConfig `json:"dispatch_action_config,omitempty"`
+	FocusOnLoad          bool                  `json:"focus_on_load,omitempty"`
+}
+
+// ElementType returns the type of the Element
+func (s URLTextInputBlockElement) ElementType() MessageElementType {
+	return s.Type
+}
+
+// NewURLTextInputBlockElement returns an instance of a plain-text input
+// element
+func NewURLTextInputBlockElement(placeholder *TextBlockObject, actionID string) *URLTextInputBlockElement {
+	return &URLTextInputBlockElement{
+		Type:        METURLTextInput,
+		ActionID:    actionID,
+		Placeholder: placeholder,
+	}
+}
+
 // PlainTextInputBlockElement creates a field where a user can enter freeform
 // data.
 // Plain-text input elements are currently only available in modals.
@@ -419,6 +515,32 @@ func (s PlainTextInputBlockElement) ElementType() MessageElementType {
 func NewPlainTextInputBlockElement(placeholder *TextBlockObject, actionID string) *PlainTextInputBlockElement {
 	return &PlainTextInputBlockElement{
 		Type:        METPlainTextInput,
+		ActionID:    actionID,
+		Placeholder: placeholder,
+	}
+}
+
+// RichTextInputBlockElement creates a field where allows users to enter formatted text
+// in a WYSIWYG composer, offering the same messaging writing experience as in Slack
+// More Information: https://api.slack.com/reference/block-kit/block-elements#rich_text_input
+type RichTextInputBlockElement struct {
+	Type                 MessageElementType    `json:"type"`
+	ActionID             string                `json:"action_id,omitempty"`
+	Placeholder          *TextBlockObject      `json:"placeholder,omitempty"`
+	InitialValue         string                `json:"initial_value,omitempty"`
+	DispatchActionConfig *DispatchActionConfig `json:"dispatch_action_config,omitempty"`
+	FocusOnLoad          bool                  `json:"focus_on_load,omitempty"`
+}
+
+// ElementType returns the type of the Element
+func (s RichTextInputBlockElement) ElementType() MessageElementType {
+	return s.Type
+}
+
+// NewRichTextInputBlockElement returns an instance of a rich-text input element
+func NewRichTextInputBlockElement(placeholder *TextBlockObject, actionID string) *RichTextInputBlockElement {
+	return &RichTextInputBlockElement{
+		Type:        METRichTextInput,
 		ActionID:    actionID,
 		Placeholder: placeholder,
 	}
@@ -474,4 +596,72 @@ func NewRadioButtonsBlockElement(actionID string, options ...*OptionBlockObject)
 		ActionID: actionID,
 		Options:  options,
 	}
+}
+
+// NumberInputBlockElement creates a field where a user can enter number
+// data.
+// Number input elements are currently only available in modals.
+//
+// More Information: https://api.slack.com/reference/block-kit/block-elements#number
+type NumberInputBlockElement struct {
+	Type                 MessageElementType    `json:"type"`
+	IsDecimalAllowed     bool                  `json:"is_decimal_allowed"`
+	ActionID             string                `json:"action_id,omitempty"`
+	Placeholder          *TextBlockObject      `json:"placeholder,omitempty"`
+	InitialValue         string                `json:"initial_value,omitempty"`
+	MinValue             string                `json:"min_value,omitempty"`
+	MaxValue             string                `json:"max_value,omitempty"`
+	DispatchActionConfig *DispatchActionConfig `json:"dispatch_action_config,omitempty"`
+}
+
+// ElementType returns the type of the Element
+func (s NumberInputBlockElement) ElementType() MessageElementType {
+	return s.Type
+}
+
+// NewNumberInputBlockElement returns an instance of a number input element
+func NewNumberInputBlockElement(placeholder *TextBlockObject, actionID string, isDecimalAllowed bool) *NumberInputBlockElement {
+	return &NumberInputBlockElement{
+		Type:             METNumber,
+		ActionID:         actionID,
+		Placeholder:      placeholder,
+		IsDecimalAllowed: isDecimalAllowed,
+	}
+}
+
+// FileInputBlockElement creates a field where a user can upload a file.
+//
+// File input elements are currently only available in modals.
+//
+// More Information: https://api.slack.com/reference/block-kit/block-elements#file_input
+type FileInputBlockElement struct {
+	Type      MessageElementType `json:"type"`
+	ActionID  string             `json:"action_id,omitempty"`
+	FileTypes []string           `json:"filetypes,omitempty"`
+	MaxFiles  int                `json:"max_files,omitempty"`
+}
+
+// ElementType returns the type of the Element
+func (s FileInputBlockElement) ElementType() MessageElementType {
+	return s.Type
+}
+
+// NewFileInputBlockElement returns an instance of a file input element
+func NewFileInputBlockElement(actionID string) *FileInputBlockElement {
+	return &FileInputBlockElement{
+		Type:     METFileInput,
+		ActionID: actionID,
+	}
+}
+
+// WithFileTypes sets the file types that can be uploaded
+func (s *FileInputBlockElement) WithFileTypes(fileTypes ...string) *FileInputBlockElement {
+	s.FileTypes = fileTypes
+	return s
+}
+
+// WithMaxFiles sets the maximum number of files that can be uploaded
+func (s *FileInputBlockElement) WithMaxFiles(maxFiles int) *FileInputBlockElement {
+	s.MaxFiles = maxFiles
+	return s
 }

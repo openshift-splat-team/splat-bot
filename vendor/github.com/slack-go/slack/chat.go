@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 
 	"github.com/slack-go/slack/slackutilsx"
@@ -29,9 +30,9 @@ const (
 
 type chatResponseFull struct {
 	Channel            string `json:"channel"`
-	Timestamp          string `json:"ts"`                             //Regular message timestamp
-	MessageTimeStamp   string `json:"message_ts"`                     //Ephemeral message timestamp
-	ScheduledMessageID string `json:"scheduled_message_id,omitempty"` //Scheduled message id
+	Timestamp          string `json:"ts"`                             // Regular message timestamp
+	MessageTimeStamp   string `json:"message_ts"`                     // Ephemeral message timestamp
+	ScheduledMessageID string `json:"scheduled_message_id,omitempty"` // Scheduled message id
 	Text               string `json:"text"`
 	SlackResponse
 }
@@ -64,6 +65,9 @@ type PostMessageParameters struct {
 	// chat.postEphemeral support
 	Channel string `json:"channel"`
 	User    string `json:"user"`
+
+	// chat metadata support
+	MetaData SlackMetadata `json:"metadata"`
 }
 
 // NewPostMessageParameters provides an instance of PostMessageParameters with all the sane default values set
@@ -221,7 +225,7 @@ func (api *Client) SendMessageContext(ctx context.Context, channelID string, opt
 			return "", "", "", err
 		}
 		req.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
-		api.Debugf("Sending request: %s", string(reqBody))
+		api.Debugf("Sending request: %s", redactToken(reqBody))
 	}
 
 	if err = doPost(ctx, api.httpclient, req, parser(&response), api); err != nil {
@@ -229,6 +233,20 @@ func (api *Client) SendMessageContext(ctx context.Context, channelID string, opt
 	}
 
 	return response.Channel, response.getMessageTimestamp(), response.Text, response.Err()
+}
+
+func redactToken(b []byte) []byte {
+	// See https://api.slack.com/authentication/token-types
+	// and https://api.slack.com/authentication/rotation
+	re, err := regexp.Compile(`(token=x[a-z.]+)-[0-9A-Za-z-]+`)
+	if err != nil {
+		// The regular expression above should never result in errors,
+		// but just in case, do no harm.
+		return b
+	}
+	// Keep "token=" and the first element of the token, which identifies its type
+	// (this could be useful for debugging, e.g. when using a wrong token).
+	return re.ReplaceAll(b, []byte("$1-REDACTED"))
 }
 
 // UnsafeApplyMsgOptions utility function for debugging/testing chat requests.
@@ -285,6 +303,7 @@ type sendConfig struct {
 	endpoint        string
 	values          url.Values
 	attachments     []Attachment
+	metadata        SlackMetadata
 	blocks          Blocks
 	responseType    string
 	replaceOriginal bool
@@ -306,6 +325,7 @@ func (t sendConfig) BuildRequestContext(ctx context.Context, token, channelID st
 			endpoint:        t.endpoint,
 			values:          t.values,
 			attachments:     t.attachments,
+			metadata:        t.metadata,
 			blocks:          t.blocks,
 			responseType:    t.responseType,
 			replaceOriginal: t.replaceOriginal,
@@ -336,6 +356,7 @@ type responseURLSender struct {
 	endpoint        string
 	values          url.Values
 	attachments     []Attachment
+	metadata        SlackMetadata
 	blocks          Blocks
 	responseType    string
 	replaceOriginal bool
@@ -352,6 +373,7 @@ func (t responseURLSender) BuildRequestContext(ctx context.Context) (*http.Reque
 		Timestamp:       t.values.Get("ts"),
 		Attachments:     t.attachments,
 		Blocks:          t.blocks,
+		Metadata:        t.metadata,
 		ResponseType:    t.responseType,
 		ReplaceOriginal: t.replaceOriginal,
 		DeleteOriginal:  t.deleteOriginal,
@@ -659,6 +681,18 @@ func MsgOptionIconEmoji(iconEmoji string) MsgOption {
 	return func(config *sendConfig) error {
 		config.values.Set("icon_emoji", iconEmoji)
 		return nil
+	}
+}
+
+// MsgOptionMetadata sets message metadata
+func MsgOptionMetadata(metadata SlackMetadata) MsgOption {
+	return func(config *sendConfig) error {
+		config.metadata = metadata
+		meta, err := json.Marshal(metadata)
+		if err == nil {
+			config.values.Set("metadata", string(meta))
+		}
+		return err
 	}
 }
 
