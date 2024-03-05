@@ -77,7 +77,10 @@ func main() {
 				fmt.Printf("Event received: %+v\n", eventsAPIEvent)
 
 				client.Ack(*evt.Request)
-				commands.Handler(client, eventsAPIEvent)
+				err = commands.Handler(client, eventsAPIEvent)
+				if err != nil {
+					log.Printf("error encountered while processing event: %v", err)
+				}
 			case socketmode.EventTypeInteractive:
 				
 			case socketmode.EventTypeSlashCommand:
@@ -88,5 +91,8 @@ func main() {
 		}
 	}()
 
-	client.Run()
+	err = client.Run()
+	if err != nil {
+		log.Printf("error encountered while running client: %v", err)
+	}
 }
