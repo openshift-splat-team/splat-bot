@@ -12,15 +12,20 @@ import (
 
 type Callback func(evt *slackevents.MessageEvent , args []string) ([]slack.MsgOption, error)
 
-// Attributes define when and how a
+// Attributes define when and how to handle a message
 type Attributes struct {
+	// Regex when matched, the Callback is invoked.
 	Regex          string
 	compiledRegex  regexp.Regexp
+	// The number of arguments a command must have. var args are not supported.
 	RequiredArgs   int
-	Channels       []string
+	// Callback function called when the attributes are met
 	Callback       Callback
+	// Rank: Future - in a situation where multiple regexes match, this allows a priority to be assigned.
 	Rank           int64
+	// RequireMention when true, @splat-bot must be used to invoke the command.
 	RequireMention 		bool
+	// HelpMarkdown is markdown that is contributed with the bot shows help.
 	HelpMarkdown       string
 }
 
