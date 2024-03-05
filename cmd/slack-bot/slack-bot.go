@@ -6,7 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/openshift-splat-team/splat-bot/pkg/jira/commands"
+	"github.com/openshift-splat-team/jira-bot/pkg/util"
+	"github.com/openshift-splat-team/splat-bot/pkg/commands"
 	"github.com/slack-go/slack/socketmode"
 
 	"github.com/slack-go/slack"
@@ -14,6 +15,7 @@ import (
 )
 
 func main() {
+	log.SetOutput(os.Stdout)
 	appToken := os.Getenv("SLACK_APP_TOKEN")
 	if appToken == "" {
 		fmt.Fprintf(os.Stderr, "SLACK_APP_TOKEN must be set.\n")
@@ -32,6 +34,12 @@ func main() {
 
 	if !strings.HasPrefix(botToken, "xoxb-") {
 		fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN must have the prefix \"xoxb-\".")
+	}
+
+	err := util.BindEnvVars()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to bind env vars: %v", err)
+		os.Exit(1)
 	}
 
 	commands.Initialize()
@@ -70,81 +78,10 @@ func main() {
 
 				client.Ack(*evt.Request)
 				commands.Handler(client, eventsAPIEvent)
-
-				switch eventsAPIEvent.Type {
-				case slackevents.CallbackEvent:
-					innerEvent := eventsAPIEvent.InnerEvent
-					switch ev := innerEvent.Data.(type) {
-					case *slackevents.AppMentionEvent:
-						_, _, err := client.PostMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
-						if err != nil {
-							fmt.Printf("failed posting message: %v", err)
-						}
-					case *slackevents.MemberJoinedChannelEvent:
-						fmt.Printf("user %q joined to channel %q", ev.User, ev.Channel)
-					}
-				default:
-					client.Debugf("unsupported Events API event received")
-				}
 			case socketmode.EventTypeInteractive:
-				callback, ok := evt.Data.(slack.InteractionCallback)
-				if !ok {
-					fmt.Printf("Ignored %+v\n", evt)
-
-					continue
-				}
-
-				fmt.Printf("Interaction received: %+v\n", callback)
-
-				var payload interface{}
-
-				switch callback.Type {
-				case slack.InteractionTypeBlockActions:
-					// See https://api.slack.com/apis/connections/socket-implement#button
-
-					client.Debugf("button clicked!")
-				case slack.InteractionTypeShortcut:
-				case slack.InteractionTypeViewSubmission:
-					// See https://api.slack.com/apis/connections/socket-implement#modal
-				case slack.InteractionTypeDialogSubmission:
-				default:
-
-				}
-
-				client.Ack(*evt.Request, payload)
+				
 			case socketmode.EventTypeSlashCommand:
-				cmd, ok := evt.Data.(slack.SlashCommand)
-				if !ok {
-					fmt.Printf("Ignored %+v\n", evt)
-
-					continue
-				}
-
-				client.Debugf("Slash command received: %+v", cmd)
-
-				payload := map[string]interface{}{
-					"blocks": []slack.Block{
-						slack.NewSectionBlock(
-							&slack.TextBlockObject{
-								Type: slack.MarkdownType,
-								Text: "foo",
-							},
-							nil,
-							slack.NewAccessory(
-								slack.NewButtonBlockElement(
-									"",
-									"somevalue",
-									&slack.TextBlockObject{
-										Type: slack.PlainTextType,
-										Text: "bar",
-									},
-								),
-							),
-						),
-					},
-				}
-
-				client.Ack(*evt.Request, payload)
+				
 			default:
 				fmt.Fprintf(os.Stderr, "Unexpected event type received: %s\n", evt.Type)
 			}
