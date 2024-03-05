@@ -34,6 +34,7 @@ var attributes = []Attributes{}
 func Initialize() {
 	attributes = append(attributes, CreateAttributes)
 	attributes = append(attributes, HelpAttributes)
+	attributes = append(attributes, UnsizedAttributes)
 
 	for idx, attribute := range attributes {
 		attributes[idx].compiledRegex = *regexp.MustCompile(attribute.Regex)
@@ -74,6 +75,7 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 			User:    appMentionEvent.User,
 			Text:    appMentionEvent.Text,
 			TimeStamp:      appMentionEvent.EventTimeStamp,
+			ThreadTimeStamp: appMentionEvent.ThreadTimeStamp,
 		}
 	case *slackevents.MessageEvent:
 		fmt.Println("Received a MessageEvent")
