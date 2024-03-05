@@ -2,7 +2,7 @@ module github.com/openshift-splat-team/splat-bot
 
 go 1.21
 
-toolchain go1.21.7
+toolchain go1.21.6
 
 require (
 	github.com/openshift-splat-team/jira-bot v0.0.0-20240305210623-988c85b3078a
