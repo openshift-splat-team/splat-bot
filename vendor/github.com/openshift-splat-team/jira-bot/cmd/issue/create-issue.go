@@ -11,7 +11,7 @@ import (
 
 // CreateIssue creates an issue in a given project.  the creator of the
 // issue will match the user creating the issue.
-func CreateIssue(project, summary, description, issueType string) (*jira.Issue, error) {
+func CreateIssue(project, summary, description, issueType string) error {
 	return createIssue(&issueCommandOptions{
 		summary:     summary,
 		description: description,
@@ -20,40 +20,37 @@ func CreateIssue(project, summary, description, issueType string) (*jira.Issue, 
 	})
 }
 
-func createIssue(options *issueCommandOptions)  (*jira.Issue, error) {
+func createIssue(options *issueCommandOptions) error {
 	client, err := util.GetJiraClient()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get Jira client: %v", err)
+		return fmt.Errorf("unable to get Jira client: %v", err)
 	}
 
 	project, err := util.GetProject(client, options.project)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get Jira project: %v", err)
+		return fmt.Errorf("unable to get Jira project: %v", err)
 	}
 
 	issueType, err := util.GetIssueType(project, options.issueType)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get Jira issue type: %v", err)
+		return fmt.Errorf("unable to get Jira issue type: %v", err)
 	}
 
-	newIssue := &jira.Issue{
+	issue, resp, err := client.Issue.Create(&jira.Issue{
 		Fields: &jira.IssueFields{
 			Summary:     options.summary,
 			Description: options.description,
 			Project:     *project,
 			Type:        *issueType,
 		},
-	}
-
-	log.Printf("creating new issue: %+v", newIssue)
-	issue, resp, err := client.Issue.Create(newIssue)
+	})
 	if err != nil {
 		responseBody, _ := util.GetResponseBody(resp)
-		return nil, fmt.Errorf("unable to create issue: %v. response body: %s", err, responseBody)
+		return fmt.Errorf("unable to create issue: %v. response body: %s", err, responseBody)
 	}
 
 	log.Printf("created issue: %s", issue.ID)
-	return issue, nil
+	return nil
 }
 
 var cmdCreateIssue = &cobra.Command{
@@ -66,7 +63,7 @@ var cmdCreateIssue = &cobra.Command{
 		options.issueType = args[1]
 		options.description = args[2]
 		options.summary = args[3]
-		_, err := createIssue(&options)
+		err := createIssue(&options)
 		if err != nil {
 			util.RuntimeError(fmt.Errorf("unable to create issue: %v", err))
 		}

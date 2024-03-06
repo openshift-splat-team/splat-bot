@@ -93,3 +93,12 @@ func GetResponseBody(resp *jira.Response) (string, error) {
 	}
 	return string(body), nil
 }
+
+func GetUnsizedStories() ([]jira.Issue, error) {
+	client, err := GetJiraClient()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get Jira client: %v", err)
+	}
+	unpointedIssues, _, err := client.Issue.Search("filter = \"OpenShift SPLAT - No story points assigned\"", nil)
+	return unpointedIssues, err
+}

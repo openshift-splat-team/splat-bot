@@ -37,7 +37,7 @@ github.com/magiconair/properties
 # github.com/mitchellh/mapstructure v1.5.0
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
-# github.com/openshift-splat-team/jira-bot v0.0.0-20240305210623-988c85b3078a
+# github.com/openshift-splat-team/jira-bot v0.0.0-20240306183142-ee619fd07a70
 ## explicit; go 1.21
 github.com/openshift-splat-team/jira-bot/cmd/issue
 github.com/openshift-splat-team/jira-bot/pkg/util
