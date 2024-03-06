@@ -19,6 +19,7 @@ import (
 var SummarizeAttributes = Attributes{
 	Regex: `\bsummary\b`,
 	RequireMention: true,
+	RespondInDM: true,
 	Callback: func(client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		response, err := getSummary(client, evt)
 		if err != nil {

@@ -1,7 +1,10 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"os"
 	"regexp"
 	"strings"
 
@@ -31,11 +34,16 @@ type Attributes struct {
 	RespondInDM 	bool
 	// MustBeInThread the attribute will only be recognized in a thread.
 	MustBeInThread bool
+	// AllowNonSplatUsers by default, only members of @splat-team can interact with the bot
+	AllowNonSplatUsers bool
 }
 
-var attributes = []Attributes{}
+var (
+	attributes = []Attributes{}
+	allowedUsers = map[string]bool{}
+)
 
-func Initialize() {
+func Initialize(client *socketmode.Client) error {
 	attributes = append(attributes, CreateAttributes)
 	attributes = append(attributes, SummarizeAttributes)
 	attributes = append(attributes, HelpAttributes)
@@ -45,9 +53,25 @@ func Initialize() {
 	for idx, attribute := range attributes {
 		attributes[idx].compiledRegex = *regexp.MustCompile(attribute.Regex)
 	}
+
+	allowed := os.Getenv("SLACK_ALLOWED_USERS")
+	if len(allowed) == 0 {
+		log.Printf("no allowed users specified with SLACK_ALLOWED_USERS. some commands may not work.")
+	}
+	allowedUsersIDs := strings.Split(allowed, ",")
+	for _, user := range allowedUsersIDs {
+		allowedUsers[user] = true
+	}
+	return nil
 }
 
-func tokenize(msgText string) []string {
+func isAllowedUser(evt *slackevents.MessageEvent) error {
+	if _, found := allowedUsers[evt.User]; !found {
+		return errors.New("user not allowed")
+	}
+	return nil
+}
+func tokenize(msgText string) []string{
 	var tokens []string
 	re := regexp.MustCompile(`"([^"]*?)"|(\S+)`)
 	matches := re.FindAllStringSubmatch(msgText, -1)
@@ -108,6 +132,13 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 	for _, attribute := range attributes {
 		if attribute.RequireMention && !ContainsBotMention(msg.Text) {
 			continue
+		}
+
+		if !attribute.AllowNonSplatUsers {
+			err := isAllowedUser(msg)
+			if err != nil {
+				return fmt.Errorf("user not allowed: %v", err)
+			}
 		}
 
 		if attribute.compiledRegex.Match([]byte(msg.Text)) {

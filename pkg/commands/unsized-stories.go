@@ -7,12 +7,13 @@ import (
 	"github.com/openshift-splat-team/jira-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+	"github.com/slack-go/slack/socketmode"
 )
 
 var UnsizedAttributes = Attributes{
 	Regex: `\bjira\s+unsized\b`,
 	RequireMention: true,
-	Callback: func(evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		issues, err := util.GetUnsizedStories()
 		if err != nil {
 			return WrapErrorToBlock(err, "error querying issues"), nil
@@ -31,6 +32,3 @@ var UnsizedAttributes = Attributes{
 	RequiredArgs: 3,
 	HelpMarkdown: "outputs a list of unsized stories for import in to PlanIt Poker: `jira unsized [project]`",
 }
-
-
-// LLM hey SPLAT bot, what is going on with Azure
