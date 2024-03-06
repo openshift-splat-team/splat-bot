@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.6
 
 require (
-	github.com/openshift-splat-team/jira-bot v0.0.0-20240305210623-988c85b3078a
+	github.com/openshift-splat-team/jira-bot v0.0.0-20240306184102-ae0ce859cefa
 	github.com/slack-go/slack v0.12.5
 )
 

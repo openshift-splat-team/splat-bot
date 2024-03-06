@@ -13,8 +13,12 @@ func compileHelp() string {
 	markdownBuffer.WriteString("SPLAT Bot provides automation for the team\n")
 	for _, attribute := range attributes {
 		markdownBuffer.WriteString(attribute.HelpMarkdown)
+		if attribute.RequireMention {
+			markdownBuffer.WriteString("*")
+		}
 		markdownBuffer.WriteString("\n")
 	}
+	markdownBuffer.WriteString("* - requires mention of @splat-bot")
 	return markdownBuffer.String()
 }
 
