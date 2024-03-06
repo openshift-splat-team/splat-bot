@@ -36,8 +36,8 @@ github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0V
 github.com/magiconair/properties v1.8.7/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
-github.com/openshift-splat-team/jira-bot v0.0.0-20240306183142-ee619fd07a70 h1:65kS4Fz3ggeuPxyjxFVbv+UrqZfFwIb4xYIe6pM4va8=
-github.com/openshift-splat-team/jira-bot v0.0.0-20240306183142-ee619fd07a70/go.mod h1:OK1jKXuqS6NNncl/T70AAfaN4yXgSyZkVmSRsyMPaes=
+github.com/openshift-splat-team/jira-bot v0.0.0-20240306184102-ae0ce859cefa h1:YgIbRj44gbGzYm8HdNYqrc4pdJYQ9HtPpZJHQ92L3n8=
+github.com/openshift-splat-team/jira-bot v0.0.0-20240306184102-ae0ce859cefa/go.mod h1:OK1jKXuqS6NNncl/T70AAfaN4yXgSyZkVmSRsyMPaes=
 github.com/pelletier/go-toml/v2 v2.1.0 h1:FnwAJ4oYMvbT/34k9zzHuZNrhlz48GB3/s6at6/MHO4=
 github.com/pelletier/go-toml/v2 v2.1.0/go.mod h1:tJU2Z3ZkXwnxa4DPO899bsyIoywizdUvyaeZurnPPDc=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

@@ -11,7 +11,7 @@ import (
 
 // CreateIssue creates an issue in a given project.  the creator of the
 // issue will match the user creating the issue.
-func CreateIssue(project, summary, description, issueType string) error {
+func CreateIssue(project, summary, description, issueType string) (*jira.Issue, error) {
 	return createIssue(&issueCommandOptions{
 		summary:     summary,
 		description: description,
@@ -20,20 +20,20 @@ func CreateIssue(project, summary, description, issueType string) error {
 	})
 }
 
-func createIssue(options *issueCommandOptions) error {
+func createIssue(options *issueCommandOptions) (*jira.Issue, error) {
 	client, err := util.GetJiraClient()
 	if err != nil {
-		return fmt.Errorf("unable to get Jira client: %v", err)
+		return nil, fmt.Errorf("unable to get Jira client: %v", err)
 	}
 
 	project, err := util.GetProject(client, options.project)
 	if err != nil {
-		return fmt.Errorf("unable to get Jira project: %v", err)
+		return nil, fmt.Errorf("unable to get Jira project: %v", err)
 	}
 
 	issueType, err := util.GetIssueType(project, options.issueType)
 	if err != nil {
-		return fmt.Errorf("unable to get Jira issue type: %v", err)
+		return nil, fmt.Errorf("unable to get Jira issue type: %v", err)
 	}
 
 	issue, resp, err := client.Issue.Create(&jira.Issue{
@@ -46,11 +46,11 @@ func createIssue(options *issueCommandOptions) error {
 	})
 	if err != nil {
 		responseBody, _ := util.GetResponseBody(resp)
-		return fmt.Errorf("unable to create issue: %v. response body: %s", err, responseBody)
+		return nil, fmt.Errorf("unable to create issue: %v. response body: %s", err, responseBody)
 	}
 
-	log.Printf("created issue: %s", issue.ID)
-	return nil
+	log.Printf("created issue: %s", issue.Key)
+	return issue, nil
 }
 
 var cmdCreateIssue = &cobra.Command{
@@ -63,7 +63,7 @@ var cmdCreateIssue = &cobra.Command{
 		options.issueType = args[1]
 		options.description = args[2]
 		options.summary = args[3]
-		err := createIssue(&options)
+		_, err := createIssue(&options)
 		if err != nil {
 			util.RuntimeError(fmt.Errorf("unable to create issue: %v", err))
 		}
