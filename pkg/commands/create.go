@@ -10,7 +10,7 @@ import (
 )
 
 var CreateAttributes = Attributes{
-	Regex: `\bjira\s+create\b`,
+	Regex: `jira create `,
 	RequireMention: true,
 	Callback: func(client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := GetThreadUrl(evt)

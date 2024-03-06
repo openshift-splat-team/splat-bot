@@ -16,12 +16,18 @@ import (
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 
+type Prompt string
+var (
+	PROMPT_ISSUE_TITLE = Prompt("can you summarize this thread to a single line? The line should be less than 100 characters. ")
+	PROMPT_ISSUE_SUMMARY = Prompt("can you summarize this thread a short paragraph?")
+)
+
 var SummarizeAttributes = Attributes{
-	Regex: `\bsummary\b`,
+	Regex: `summary`,
 	RequireMention: true,
-	RespondInDM: true,
+	RespondInDM: false,
 	Callback: func(client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
-		response, err := getSummary(client, evt)
+		response, err := handlePrompt(PROMPT_ISSUE_SUMMARY, client, evt)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get summary: %v", err)
 		}
@@ -31,16 +37,18 @@ var SummarizeAttributes = Attributes{
 	HelpMarkdown: "summarize this thread: `summary`",
 }
 
-func getSummary(client *socketmode.Client, evt *slackevents.MessageEvent) (string, error){
+func handlePrompt(prompt Prompt, client *socketmode.Client, evt *slackevents.MessageEvent) (string, error){
 	endpoint := os.Getenv("OLLAMA_ENDPOINT")
 	if len(endpoint) == 0 {
 		return "", errors.New("OLLAMA_ENDPOINT must be exported")
 	}
-	llm, err := ollama.New(ollama.WithModel("llama2"), ollama.WithServerURL(endpoint))
-	if err != nil {
-		log.Fatal(err)
-	}
 
+	llm, err := ollama.New(ollama.WithModel("llama2"))
+  if err != nil {
+    log.Fatal(err)
+  }
+  
+  log.Printf("channel %s/%s\n", evt.Channel, evt.TimeStamp)
 	messages, _, _, err := client.GetConversationReplies(&slack.GetConversationRepliesParameters{
 		ChannelID: evt.Channel,
 		Timestamp: evt.ThreadTimeStamp,
@@ -50,7 +58,8 @@ func getSummary(client *socketmode.Client, evt *slackevents.MessageEvent) (strin
 	}
 
 	buffer := strings.Builder{}
-	buffer.WriteString("summarize this thread:\n")
+	buffer.WriteString(string(prompt))
+	buffer.WriteString("\n")
 	for _, message := range messages {
 		text := message.Msg.Text
 		if ContainsBotMention(text) {
@@ -59,7 +68,6 @@ func getSummary(client *socketmode.Client, evt *slackevents.MessageEvent) (strin
 		buffer.WriteString(message.Msg.Text)
 		buffer.WriteString("\n")
 	}
-	log.Printf("sending context to ollama: %s", buffer.String())
 	ctx := context.Background()
 	completion, err := llms.GenerateFromSinglePrompt(ctx, llm, buffer.String())
 	if err != nil {

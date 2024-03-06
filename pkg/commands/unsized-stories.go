@@ -11,7 +11,7 @@ import (
 )
 
 var UnsizedAttributes = Attributes{
-	Regex: `\bjira\s+unsized\b`,
+	Regex: `jira unsized `,
 	RequireMention: true,
 	Callback: func(client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		issues, err := util.GetUnsizedStories()

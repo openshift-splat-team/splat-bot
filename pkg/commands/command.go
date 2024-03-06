@@ -44,6 +44,7 @@ var (
 )
 
 func Initialize(client *socketmode.Client) error {
+	attributes = append(attributes, CreateSummaryAttributes)
 	attributes = append(attributes, CreateAttributes)
 	attributes = append(attributes, SummarizeAttributes)
 	attributes = append(attributes, HelpAttributes)
@@ -87,8 +88,8 @@ func tokenize(msgText string) []string{
 	return tokens
 }
 
-func getDMChannelID(client *socketmode.Client, evt slackevents.EventsAPIEvent) (string, error) {
-	user := evt.InnerEvent.Data.(*slackevents.MessageEvent).User
+func getDMChannelID(client *socketmode.Client, evt *slackevents.MessageEvent) (string, error) {
+	user := evt.User
 	channel, _, _, err := client.OpenConversation(&slack.OpenConversationParameters{
 		Users: []string{user},
 	})
@@ -111,11 +112,11 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 	switch ev := evt.InnerEvent.Data.(type) {
 	case *slackevents.AppMentionEvent:
 		appMentionEvent := evt.InnerEvent.Data.(*slackevents.AppMentionEvent)
-		msg = &slackevents.MessageEvent{
-			Channel:         appMentionEvent.Channel,
-			User:            appMentionEvent.User,
-			Text:            appMentionEvent.Text,
-			TimeStamp:       appMentionEvent.EventTimeStamp,
+		msg = &	slackevents.MessageEvent {
+			Channel: appMentionEvent.Channel,
+			User:    appMentionEvent.User,
+			Text:    appMentionEvent.Text,
+			TimeStamp:      appMentionEvent.TimeStamp,
 			ThreadTimeStamp: appMentionEvent.ThreadTimeStamp,
 		}
 	case *slackevents.MessageEvent:
@@ -141,14 +142,18 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 			}
 		}
 
-		if attribute.compiledRegex.Match([]byte(msg.Text)) {
+		args := tokenize(msg.Text)
+		if attribute.RequireMention {
+			args = args[1:]
+		}
+
+		normalizedArgs := strings.Join(args, " ")
+
+		if strings.HasPrefix(normalizedArgs, attribute.Regex) {
+			log.Printf("%s - %s", normalizedArgs, attribute.Regex)
 			var response []slack.MsgOption
 			var err error
 			inThread := len(GetThreadUrl(msg)) > 0
-			args := tokenize(msg.Text)
-			if attribute.RequireMention {
-				args = args[1:]
-			}
 			if attribute.MustBeInThread && !inThread {
 				continue
 			}
@@ -168,7 +173,7 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 			}
 			if len(response) > 0 {
 				if attribute.RespondInDM {
-					channelID, err := getDMChannelID(client, evt)
+					channelID, err := getDMChannelID(client, msg)
 					if err != nil {
 						fmt.Printf("failed getting channel ID: %v", err)
 					}
@@ -180,6 +185,7 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 				if err != nil {
 					fmt.Printf("failed responding to message: %v", err)
 				}
+				return nil
 			}
 		}
 	}
