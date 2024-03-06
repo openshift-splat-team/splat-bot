@@ -24,6 +24,7 @@ func compileHelp() string {
 
 var HelpAttributes = Attributes{
 	Regex: `\bhelp\b`,
+	RequireMention: true,
 	Callback: func(eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		return []slack.MsgOption{
 			slack.MsgOptionText(compileHelp(), true),

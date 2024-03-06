@@ -26,7 +26,11 @@ type Attributes struct {
 	// RequireMention when true, @splat-bot must be used to invoke the command.
 	RequireMention bool
 	// HelpMarkdown is markdown that is contributed with the bot shows help.
-	HelpMarkdown string
+	HelpMarkdown       string
+	// RespondInDM responds in a DM to the user.
+	RespondInDM 	bool
+	// MustBeInThread the attribute will only be recognized in a thread.
+	MustBeInThread bool
 }
 
 var attributes = []Attributes{}
@@ -56,6 +60,18 @@ func tokenize(msgText string) []string {
 		}
 	}
 	return tokens
+}
+
+func getDMChannelID(client *socketmode.Client, evt slackevents.EventsAPIEvent) (string, error) {
+	user := evt.InnerEvent.Data.(*slackevents.MessageEvent).User
+	channel, _, _, err := client.OpenConversation(&slack.OpenConversationParameters{
+		Users: []string{user},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to open conversation: %v", err)
+	}
+
+	return channel.Latest.Channel, nil
 }
 
 func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
@@ -101,9 +117,13 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 		if attribute.compiledRegex.Match([]byte(msg.Text)) {
 			var response []slack.MsgOption
 			var err error
+			inThread := len(GetThreadUrl(msg)) > 0
 			args := tokenize(msg.Text)
 			if attribute.RequireMention {
 				args = args[1:]
+			}
+			if attribute.MustBeInThread && !inThread {
+				continue
 			}
 			if len(args) < attribute.RequiredArgs {
 				response = []slack.MsgOption{
@@ -120,7 +140,13 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 				}
 			}
 			if len(response) > 0 {
-				if len(GetThreadUrl(msg)) > 0 {
+				if attribute.RespondInDM {
+					channelID, err := getDMChannelID(client, evt)
+					if err != nil {
+						fmt.Printf("failed getting channel ID: %v", err)
+					}
+					msg.Channel = channelID
+				} else if len(GetThreadUrl(msg)) > 0{
 					response = append(response, slack.MsgOptionTS(msg.ThreadTimeStamp))
 				}
 				_, _, err = client.PostMessage(msg.Channel, response...)
