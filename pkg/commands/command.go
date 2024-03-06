@@ -10,7 +10,7 @@ import (
 	"github.com/slack-go/slack/socketmode"
 )
 
-type Callback func(evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error)
+type Callback func(client *socketmode.Client, evt *slackevents.MessageEvent , args []string) ([]slack.MsgOption, error)
 
 // Attributes define when and how to handle a message
 type Attributes struct {
@@ -37,6 +37,7 @@ var attributes = []Attributes{}
 
 func Initialize() {
 	attributes = append(attributes, CreateAttributes)
+	attributes = append(attributes, SummarizeAttributes)
 	attributes = append(attributes, HelpAttributes)
 	attributes = append(attributes, UnsizedAttributes)
 	attributes = append(attributes, ProwAttibutes)
@@ -85,7 +86,6 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 	msg := &slackevents.MessageEvent{}
 	switch ev := evt.InnerEvent.Data.(type) {
 	case *slackevents.AppMentionEvent:
-		fmt.Println("Received an AppMentionEvent")
 		appMentionEvent := evt.InnerEvent.Data.(*slackevents.AppMentionEvent)
 		msg = &slackevents.MessageEvent{
 			Channel:         appMentionEvent.Channel,
@@ -95,7 +95,6 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 			ThreadTimeStamp: appMentionEvent.ThreadTimeStamp,
 		}
 	case *slackevents.MessageEvent:
-		fmt.Println("Received a MessageEvent")
 		msg = evt.InnerEvent.Data.(*slackevents.MessageEvent)
 	default:
 		return fmt.Errorf("received an unknown event type: %T", ev)
@@ -106,11 +105,8 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 		return nil
 	}
 
-	//isAppMention := slackevents.EventsAPIType(reflect.TypeOf(evt.InnerEvent.Data).String()) == slackevents.AppMention
-
 	for _, attribute := range attributes {
 		if attribute.RequireMention && !ContainsBotMention(msg.Text) {
-			fmt.Printf("requires mention: %s\n", msg.Text)
 			continue
 		}
 
@@ -134,7 +130,7 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 					slack.MsgOptionText(fmt.Sprintf("command requires %d arguments. if an argument is greater than one word, be sure to wrap that argument in quotes.\n%s\n", attribute.RequiredArgs, attribute.HelpMarkdown), true),
 				}
 			} else {
-				response, err = attribute.Callback(msg, args)
+				response, err = attribute.Callback(client, msg, args)
 				if err != nil {
 					fmt.Printf("failed processing message: %v", err)
 				}
