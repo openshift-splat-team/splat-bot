@@ -7,10 +7,45 @@ contrib.go.opencensus.io/exporter/prometheus
 # github.com/andygrunwald/go-jira v1.16.0
 ## explicit; go 1.15
 github.com/andygrunwald/go-jira
+# github.com/beorn7/perks v1.0.1
+## explicit; go 1.11
+github.com/beorn7/perks/quantile
+# github.com/blendle/zapdriver v1.3.1
+## explicit; go 1.12
+github.com/blendle/zapdriver
+# github.com/census-instrumentation/opencensus-proto v0.4.1
+## explicit; go 1.18
+github.com/census-instrumentation/opencensus-proto/gen-go/agent/common/v1
+github.com/census-instrumentation/opencensus-proto/gen-go/agent/metrics/v1
+github.com/census-instrumentation/opencensus-proto/gen-go/agent/trace/v1
+github.com/census-instrumentation/opencensus-proto/gen-go/metrics/v1
+github.com/census-instrumentation/opencensus-proto/gen-go/resource/v1
+github.com/census-instrumentation/opencensus-proto/gen-go/trace/v1
+# github.com/cespare/xxhash/v2 v2.2.0
+## explicit; go 1.11
+github.com/cespare/xxhash/v2
+# github.com/cjwagner/httpcache v0.0.0-20230907212505-d4841bbad466
+## explicit
+github.com/cjwagner/httpcache
+github.com/cjwagner/httpcache/diskcache
+github.com/cjwagner/httpcache/redis
+# github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
+## explicit
+github.com/davecgh/go-spew/spew
+# github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
+## explicit; go 1.12
+github.com/dgrijalva/jwt-go/v4
 # github.com/dlclark/regexp2 v1.8.1
 ## explicit; go 1.13
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
+# github.com/emicklei/go-restful/v3 v3.9.0
+## explicit; go 1.13
+github.com/emicklei/go-restful/v3
+github.com/emicklei/go-restful/v3/log
+# github.com/evanphx/json-patch/v5 v5.6.0
+## explicit; go 1.12
+github.com/evanphx/json-patch/v5
 # github.com/fatih/structs v1.1.0
 ## explicit
 github.com/fatih/structs
@@ -81,13 +116,17 @@ github.com/google/go-containerregistry/pkg/name
 # github.com/google/go-querystring v1.1.0
 ## explicit; go 1.10
 github.com/google/go-querystring/query
+# github.com/google/gofuzz v1.2.1-0.20210504230335-f78f29fc09ea
+## explicit; go 1.12
+github.com/google/gofuzz
+github.com/google/gofuzz/bytesource
 # github.com/google/uuid v1.4.0
 ## explicit
 github.com/google/uuid
 # github.com/gorilla/websocket v1.4.2
 ## explicit; go 1.12
 github.com/gorilla/websocket
-# github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
+# github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 ## explicit; go 1.17
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/httprule
 github.com/grpc-ecosystem/grpc-gateway/v2/runtime
@@ -162,6 +201,28 @@ github.com/pkg/errors
 # github.com/pkoukk/tiktoken-go v0.1.2
 ## explicit; go 1.19
 github.com/pkoukk/tiktoken-go
+# github.com/prometheus/client_golang v1.13.0
+## explicit; go 1.17
+github.com/prometheus/client_golang/prometheus
+github.com/prometheus/client_golang/prometheus/internal
+github.com/prometheus/client_golang/prometheus/promhttp
+# github.com/prometheus/client_model v0.3.0
+## explicit; go 1.9
+github.com/prometheus/client_model/go
+# github.com/prometheus/common v0.37.0
+## explicit; go 1.16
+github.com/prometheus/common/expfmt
+github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
+github.com/prometheus/common/model
+# github.com/prometheus/procfs v0.8.0
+## explicit; go 1.17
+github.com/prometheus/procfs
+github.com/prometheus/procfs/internal/fs
+github.com/prometheus/procfs/internal/util
+# github.com/prometheus/statsd_exporter v0.21.0
+## explicit; go 1.13
+github.com/prometheus/statsd_exporter/pkg/mapper
+github.com/prometheus/statsd_exporter/pkg/mapper/fsm
 # github.com/sagikazarmark/locafero v0.4.0
 ## explicit; go 1.20
 github.com/sagikazarmark/locafero
@@ -176,7 +237,7 @@ github.com/shurcooL/githubv4
 github.com/shurcooL/graphql
 github.com/shurcooL/graphql/ident
 github.com/shurcooL/graphql/internal/jsonutil
-# github.com/sirupsen/logrus v1.9.0
+# github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
 # github.com/slack-go/slack v0.12.5
@@ -223,6 +284,22 @@ github.com/spf13/viper/internal/features
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
+# github.com/tektoncd/pipeline v0.45.0
+## explicit; go 1.18
+github.com/tektoncd/pipeline/pkg/apis/config
+github.com/tektoncd/pipeline/pkg/apis/pipeline
+github.com/tektoncd/pipeline/pkg/apis/pipeline/pod
+github.com/tektoncd/pipeline/pkg/apis/pipeline/v1
+github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1
+github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1
+github.com/tektoncd/pipeline/pkg/apis/run/v1alpha1
+github.com/tektoncd/pipeline/pkg/apis/run/v1beta1
+github.com/tektoncd/pipeline/pkg/apis/validate
+github.com/tektoncd/pipeline/pkg/apis/version
+github.com/tektoncd/pipeline/pkg/list
+github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag
+github.com/tektoncd/pipeline/pkg/spire/config
+github.com/tektoncd/pipeline/pkg/substitution
 # github.com/tmc/langchaingo v0.1.5
 ## explicit; go 1.21
 github.com/tmc/langchaingo/callbacks
@@ -276,7 +353,6 @@ golang.org/x/exp/slog/internal
 golang.org/x/exp/slog/internal/buffer
 # golang.org/x/net v0.19.0
 ## explicit; go 1.18
-golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
@@ -320,7 +396,7 @@ gomodules.xyz/jsonpatch/v2
 # google.golang.org/api v0.153.0
 ## explicit; go 1.19
 google.golang.org/api/support/bundler
-# google.golang.org/appengine v1.6.7
+# google.golang.org/appengine v1.6.8
 ## explicit; go 1.11
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
@@ -329,16 +405,13 @@ google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17
-## explicit; go 1.19
-google.golang.org/genproto/protobuf/field_mask
-# google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17
+# google.golang.org/genproto/googleapis/api v0.0.0-20231211222908-989df2bf70f3
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/api/httpbody
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20231211222908-989df2bf70f3
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.59.0
+# google.golang.org/grpc v1.60.0
 ## explicit; go 1.19
 google.golang.org/grpc
 google.golang.org/grpc/attributes
@@ -375,6 +448,7 @@ google.golang.org/grpc/internal/metadata
 google.golang.org/grpc/internal/pretty
 google.golang.org/grpc/internal/resolver
 google.golang.org/grpc/internal/resolver/dns
+google.golang.org/grpc/internal/resolver/dns/internal
 google.golang.org/grpc/internal/resolver/passthrough
 google.golang.org/grpc/internal/resolver/unix
 google.golang.org/grpc/internal/serviceconfig
@@ -386,6 +460,7 @@ google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
 google.golang.org/grpc/peer
 google.golang.org/grpc/resolver
+google.golang.org/grpc/resolver/dns
 google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
