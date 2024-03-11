@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/ocp/4.16:base-rhel9
+FROM golang:1.21
 
 USER root
 
