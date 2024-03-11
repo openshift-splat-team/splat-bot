@@ -10,23 +10,23 @@ import (
 	"github.com/slack-go/slack/socketmode"
 )
 
-type Callback func(evt *slackevents.MessageEvent , args []string) ([]slack.MsgOption, error)
+type Callback func(evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error)
 
 // Attributes define when and how to handle a message
 type Attributes struct {
 	// Regex when matched, the Callback is invoked.
-	Regex          string
-	compiledRegex  regexp.Regexp
+	Regex         string
+	compiledRegex regexp.Regexp
 	// The number of arguments a command must have. var args are not supported.
-	RequiredArgs   int
+	RequiredArgs int
 	// Callback function called when the attributes are met
-	Callback       Callback
+	Callback Callback
 	// Rank: Future - in a situation where multiple regexes match, this allows a priority to be assigned.
-	Rank           int64
+	Rank int64
 	// RequireMention when true, @splat-bot must be used to invoke the command.
-	RequireMention 		bool
+	RequireMention bool
 	// HelpMarkdown is markdown that is contributed with the bot shows help.
-	HelpMarkdown       string
+	HelpMarkdown string
 }
 
 var attributes = []Attributes{}
@@ -35,13 +35,14 @@ func Initialize() {
 	attributes = append(attributes, CreateAttributes)
 	attributes = append(attributes, HelpAttributes)
 	attributes = append(attributes, UnsizedAttributes)
+	attributes = append(attributes, ProwAttibutes)
 
 	for idx, attribute := range attributes {
 		attributes[idx].compiledRegex = *regexp.MustCompile(attribute.Regex)
 	}
 }
 
-func tokenize(msgText string) []string{
+func tokenize(msgText string) []string {
 	var tokens []string
 	re := regexp.MustCompile(`"([^"]*?)"|(\S+)`)
 	matches := re.FindAllStringSubmatch(msgText, -1)
@@ -65,16 +66,16 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 		return nil
 	}
 
-	msg := &slackevents.MessageEvent {}
+	msg := &slackevents.MessageEvent{}
 	switch ev := evt.InnerEvent.Data.(type) {
 	case *slackevents.AppMentionEvent:
 		fmt.Println("Received an AppMentionEvent")
 		appMentionEvent := evt.InnerEvent.Data.(*slackevents.AppMentionEvent)
-		msg = &	slackevents.MessageEvent {
-			Channel: appMentionEvent.Channel,
-			User:    appMentionEvent.User,
-			Text:    appMentionEvent.Text,
-			TimeStamp:      appMentionEvent.EventTimeStamp,
+		msg = &slackevents.MessageEvent{
+			Channel:         appMentionEvent.Channel,
+			User:            appMentionEvent.User,
+			Text:            appMentionEvent.Text,
+			TimeStamp:       appMentionEvent.EventTimeStamp,
 			ThreadTimeStamp: appMentionEvent.ThreadTimeStamp,
 		}
 	case *slackevents.MessageEvent:
@@ -119,7 +120,7 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 				}
 			}
 			if len(response) > 0 {
-				if len(GetThreadUrl(msg)) > 0{
+				if len(GetThreadUrl(msg)) > 0 {
 					response = append(response, slack.MsgOptionTS(msg.ThreadTimeStamp))
 				}
 				_, _, err = client.PostMessage(msg.Channel, response...)
