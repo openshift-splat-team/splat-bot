@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:1.20.12-2
+FROM registry.ci.openshift.org/ocp/4.16:base-rhel9
 
 USER root
 
