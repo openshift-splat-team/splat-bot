@@ -35,7 +35,8 @@ func Initialize() {
 	attributes = append(attributes, CreateAttributes)
 	attributes = append(attributes, HelpAttributes)
 	attributes = append(attributes, UnsizedAttributes)
-	attributes = append(attributes, ProwAttibutes)
+	attributes = append(attributes, ProwAttributes)
+	attributes = append(attributes, ProwGraphAttributes)
 
 	for idx, attribute := range attributes {
 		attributes[idx].compiledRegex = *regexp.MustCompile(attribute.Regex)
