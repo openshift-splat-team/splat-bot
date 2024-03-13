@@ -5,6 +5,7 @@ import (
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+	"github.com/slack-go/slack/socketmode"
 )
 
 func compileHelp() string {
@@ -24,7 +25,8 @@ func compileHelp() string {
 
 var HelpAttributes = Attributes{
 	Regex: `\bhelp\b`,
-	Callback: func(eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	RequireMention: true,
+	Callback: func(client *socketmode.Client, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		return []slack.MsgOption{
 			slack.MsgOptionText(compileHelp(), true),
 		}, nil

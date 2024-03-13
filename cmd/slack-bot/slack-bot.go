@@ -42,8 +42,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	commands.Initialize()
-
 	api := slack.New(
 		botToken,
 		slack.OptionDebug(true),
@@ -56,6 +54,12 @@ func main() {
 		socketmode.OptionDebug(false),
 		socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
 	)
+
+	err = commands.Initialize(client)
+	if err != nil {
+		fmt.Printf("unable to get users in group")
+		os.Exit(1)
+	}
 
 	go func() {
 		for evt := range client.Events {

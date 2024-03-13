@@ -6,12 +6,13 @@ import (
 	"github.com/openshift-splat-team/jira-bot/cmd/issue"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+	"github.com/slack-go/slack/socketmode"
 )
 
 var CreateAttributes = Attributes{
-	Regex: `\bjira\s+create\b`,
+	Regex: `jira create `,
 	RequireMention: true,
-	Callback: func(evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := GetThreadUrl(evt)
 		description := args[4]
 		if len(url) > 0 {

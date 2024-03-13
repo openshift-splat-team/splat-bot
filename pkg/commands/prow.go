@@ -12,6 +12,7 @@ import (
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+	"github.com/slack-go/slack/socketmode"
 
 	prowv1 "k8s.io/test-infra/prow/apis/prowjobs/v1"
 )
@@ -32,7 +33,7 @@ var (
 var ProwAttibutes = Attributes{
 	Regex:          `\bprow\b`,
 	RequireMention: true,
-	Callback: func(evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(client *socketmode.Client,evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		startProwRetrievalTimers()
 
 		results, err := queryProwResults(args[1], args[2], prowv1.ProwJobState(args[3]))
