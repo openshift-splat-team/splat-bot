@@ -6,9 +6,6 @@ name: Go Mod
 on:
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
-  pull_request_target:
-    branches:
-      - main
 jobs:
   build:
     runs-on: ubuntu-latest
