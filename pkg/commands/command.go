@@ -1,7 +1,10 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"os"
 	"regexp"
 	"strings"
 
@@ -10,7 +13,7 @@ import (
 	"github.com/slack-go/slack/socketmode"
 )
 
-type Callback func(evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error)
+type Callback func(client *socketmode.Client, evt *slackevents.MessageEvent , args []string) ([]slack.MsgOption, error)
 
 // Attributes define when and how to handle a message
 type Attributes struct {
@@ -26,13 +29,24 @@ type Attributes struct {
 	// RequireMention when true, @splat-bot must be used to invoke the command.
 	RequireMention bool
 	// HelpMarkdown is markdown that is contributed with the bot shows help.
-	HelpMarkdown string
+	HelpMarkdown       string
+	// RespondInDM responds in a DM to the user.
+	RespondInDM 	bool
+	// MustBeInThread the attribute will only be recognized in a thread.
+	MustBeInThread bool
+	// AllowNonSplatUsers by default, only members of @splat-team can interact with the bot
+	AllowNonSplatUsers bool
 }
 
-var attributes = []Attributes{}
+var (
+	attributes = []Attributes{}
+	allowedUsers = map[string]bool{}
+)
 
-func Initialize() {
+func Initialize(client *socketmode.Client) error {
+	attributes = append(attributes, CreateSummaryAttributes)
 	attributes = append(attributes, CreateAttributes)
+	attributes = append(attributes, SummarizeAttributes)
 	attributes = append(attributes, HelpAttributes)
 	attributes = append(attributes, UnsizedAttributes)
 	attributes = append(attributes, ProwAttibutes)
@@ -40,9 +54,25 @@ func Initialize() {
 	for idx, attribute := range attributes {
 		attributes[idx].compiledRegex = *regexp.MustCompile(attribute.Regex)
 	}
+
+	allowed := os.Getenv("SLACK_ALLOWED_USERS")
+	if len(allowed) == 0 {
+		log.Printf("no allowed users specified with SLACK_ALLOWED_USERS. some commands may not work.")
+	}
+	allowedUsersIDs := strings.Split(allowed, ",")
+	for _, user := range allowedUsersIDs {
+		allowedUsers[user] = true
+	}
+	return nil
 }
 
-func tokenize(msgText string) []string {
+func isAllowedUser(evt *slackevents.MessageEvent) error {
+	if _, found := allowedUsers[evt.User]; !found {
+		return errors.New("user not allowed")
+	}
+	return nil
+}
+func tokenize(msgText string) []string{
 	var tokens []string
 	re := regexp.MustCompile(`"([^"]*?)"|(\S+)`)
 	matches := re.FindAllStringSubmatch(msgText, -1)
@@ -58,6 +88,18 @@ func tokenize(msgText string) []string {
 	return tokens
 }
 
+func getDMChannelID(client *socketmode.Client, evt *slackevents.MessageEvent) (string, error) {
+	user := evt.User
+	channel, _, _, err := client.OpenConversation(&slack.OpenConversationParameters{
+		Users: []string{user},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to open conversation: %v", err)
+	}
+
+	return channel.Latest.Channel, nil
+}
+
 func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 	switch evt.Type {
 	case "message":
@@ -69,17 +111,15 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 	msg := &slackevents.MessageEvent{}
 	switch ev := evt.InnerEvent.Data.(type) {
 	case *slackevents.AppMentionEvent:
-		fmt.Println("Received an AppMentionEvent")
 		appMentionEvent := evt.InnerEvent.Data.(*slackevents.AppMentionEvent)
-		msg = &slackevents.MessageEvent{
-			Channel:         appMentionEvent.Channel,
-			User:            appMentionEvent.User,
-			Text:            appMentionEvent.Text,
-			TimeStamp:       appMentionEvent.EventTimeStamp,
+		msg = &	slackevents.MessageEvent {
+			Channel: appMentionEvent.Channel,
+			User:    appMentionEvent.User,
+			Text:    appMentionEvent.Text,
+			TimeStamp:      appMentionEvent.TimeStamp,
 			ThreadTimeStamp: appMentionEvent.ThreadTimeStamp,
 		}
 	case *slackevents.MessageEvent:
-		fmt.Println("Received a MessageEvent")
 		msg = evt.InnerEvent.Data.(*slackevents.MessageEvent)
 	default:
 		return fmt.Errorf("received an unknown event type: %T", ev)
@@ -90,20 +130,32 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 		return nil
 	}
 
-	//isAppMention := slackevents.EventsAPIType(reflect.TypeOf(evt.InnerEvent.Data).String()) == slackevents.AppMention
-
 	for _, attribute := range attributes {
 		if attribute.RequireMention && !ContainsBotMention(msg.Text) {
-			fmt.Printf("requires mention: %s\n", msg.Text)
 			continue
 		}
 
-		if attribute.compiledRegex.Match([]byte(msg.Text)) {
+		if !attribute.AllowNonSplatUsers {
+			err := isAllowedUser(msg)
+			if err != nil {
+				return fmt.Errorf("user not allowed: %v", err)
+			}
+		}
+
+		args := tokenize(msg.Text)
+		if attribute.RequireMention {
+			args = args[1:]
+		}
+
+		normalizedArgs := strings.Join(args, " ")
+
+		if strings.HasPrefix(normalizedArgs, attribute.Regex) {
+			log.Printf("%s - %s", normalizedArgs, attribute.Regex)
 			var response []slack.MsgOption
 			var err error
-			args := tokenize(msg.Text)
-			if attribute.RequireMention {
-				args = args[1:]
+			inThread := len(GetThreadUrl(msg)) > 0
+			if attribute.MustBeInThread && !inThread {
+				continue
 			}
 			if len(args) < attribute.RequiredArgs {
 				response = []slack.MsgOption{
@@ -114,19 +166,26 @@ func Handler(client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
 					slack.MsgOptionText(fmt.Sprintf("command requires %d arguments. if an argument is greater than one word, be sure to wrap that argument in quotes.\n%s\n", attribute.RequiredArgs, attribute.HelpMarkdown), true),
 				}
 			} else {
-				response, err = attribute.Callback(msg, args)
+				response, err = attribute.Callback(client, msg, args)
 				if err != nil {
 					fmt.Printf("failed processing message: %v", err)
 				}
 			}
 			if len(response) > 0 {
-				if len(GetThreadUrl(msg)) > 0 {
+				if attribute.RespondInDM {
+					channelID, err := getDMChannelID(client, msg)
+					if err != nil {
+						fmt.Printf("failed getting channel ID: %v", err)
+					}
+					msg.Channel = channelID
+				} else if len(GetThreadUrl(msg)) > 0{
 					response = append(response, slack.MsgOptionTS(msg.ThreadTimeStamp))
 				}
 				_, _, err = client.PostMessage(msg.Channel, response...)
 				if err != nil {
 					fmt.Printf("failed responding to message: %v", err)
 				}
+				return nil
 			}
 		}
 	}
