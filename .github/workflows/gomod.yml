@@ -5,7 +5,7 @@ name: Go Mod
 
 on:
   pull_request:
-    types: [synchronize]
+    types: [opened, labeled, unlabeled, synchronize]
   pull_request_target:
     branches:
       - main
