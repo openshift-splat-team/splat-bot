@@ -36,7 +36,7 @@ var (
 var ProwGraphAttributes = Attributes{
 	Regex:          `\bprow\s+graph\b`,
 	RequireMention: true,
-	Callback: func(evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		startProwRetrievalTimers()
 
 		results, err := createProwGraph(args[2])
