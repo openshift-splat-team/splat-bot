@@ -40,4 +40,6 @@ type Attributes struct {
 	DontGlobQuotes bool
 	// RespondInChannel responds in the channel to the user. If false, responds in a thread.
 	RespondInChannel bool
+	// ResponseIsEphemeral specifies if the response should be ephemeral.
+	ResponseIsEphemeral bool
 }
