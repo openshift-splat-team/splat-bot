@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/slack-go/slack"
@@ -10,12 +11,11 @@ import (
 )
 
 const (
-	JIRA_BASE_URL="https://issues.redhat.com"
-	BOT_USER_ID="U03JLP91K47"
+	JIRA_BASE_URL = "https://issues.redhat.com"
 )
 
 func StringToBlock(message string, useMarkdown bool) []slack.MsgOption {
-	return []slack.MsgOption{	
+	return []slack.MsgOption{
 		slack.MsgOptionText(message, useMarkdown),
 		slack.MsgOptionEnableLinkUnfurl(),
 	}
@@ -32,12 +32,16 @@ func GetThreadUrl(event *slackevents.MessageEvent) string {
 			workspace, event.Channel, strings.Replace(event.ThreadTimeStamp, ".", "", 1))
 
 		return threadURL
-	} 
+	}
 	log.Println("This is not a threaded message")
-	return ""	
+	return ""
 }
 
 func ContainsBotMention(messageText string) bool {
-	return strings.Contains(messageText, fmt.Sprintf("<@%s>", BOT_USER_ID))
+	userID, ok := os.LookupEnv("SPLAT_BOT_USER_ID")
+	if !ok {
+		log.Println("no bot user id specified with SPLAT_BOT_USER_ID")
+		return false
+	}
+	return strings.Contains(messageText, fmt.Sprintf("<@%s>", userID))
 }
-
