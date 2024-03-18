@@ -20,7 +20,7 @@ var (
 )
 
 var SummarizeAttributes = Attributes{
-	Regex:          `summary`,
+	Commands:       []string{"summary"},
 	RequireMention: true,
 	RespondInDM:    false,
 	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {

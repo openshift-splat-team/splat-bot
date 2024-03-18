@@ -11,7 +11,7 @@ import (
 )
 
 var CreateSummaryAttributes = Attributes{
-	Regex:          `jira create-with-summary `,
+	Commands:       []string{"jira", "create-with-summary"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := GetThreadUrl(evt)

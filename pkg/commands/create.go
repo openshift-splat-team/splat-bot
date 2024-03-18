@@ -11,7 +11,7 @@ import (
 )
 
 var CreateAttributes = Attributes{
-	Regex:          `jira create `,
+	Commands:       []string{"jira", "create"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := GetThreadUrl(evt)
