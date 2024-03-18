@@ -14,6 +14,7 @@ export JIRA_BOARD="SPLAT - Scrum Board"
 export JIRA_PERSONAL_ACCESS_TOKEN=<your Jira token>
 export SLACK_BOT_TOKEN="xoxb-......"
 export SLACK_APP_TOKEN="xapp-......"
+export SLACK_ALLOWED_USERS="UHM.... UHN...."
 
 ./slack-bot
 ~~~
@@ -27,7 +28,7 @@ bare minimum, a command must have a regex and handler:
 ```go
 var HelpAttributes = Attributes{
 	Regex: `\bhelp\b`,
-	Callback: func(eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client *socketmode.Client, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		return []slack.MsgOption{
 			slack.MsgOptionText(compileHelp(), true),
 		}, nil
@@ -39,22 +40,27 @@ Below are the various attributes which may be applied to a command.
 // Attributes define when and how to handle a message
 type Attributes struct {
 	// Regex when matched, the Callback is invoked.
-	Regex          string
-	compiledRegex  regexp.Regexp
+	Regex         string
+	compiledRegex regexp.Regexp
 	// The number of arguments a command must have. var args are not supported.
-	RequiredArgs   int
+	RequiredArgs int
 	// Callback function called when the attributes are met
-	Callback       Callback
+	Callback Callback
 	// Rank: Future - in a situation where multiple regexes match, this allows a priority to be assigned.
-	Rank           int64
+	Rank int64
 	// RequireMention when true, @splat-bot must be used to invoke the command.
-	RequireMention 		bool
+	RequireMention bool
 	// HelpMarkdown is markdown that is contributed with the bot shows help.
 	HelpMarkdown       string
+	// RespondInDM responds in a DM to the user.
+	RespondInDM 	bool
+	// MustBeInThread the attribute will only be recognized in a thread.
+	MustBeInThread bool
+	// AllowNonSplatUsers by default, only members of @splat-team can interact with the bot
+	AllowNonSplatUsers bool
 }
 ```
 
-# Threads 
+# 
 
-If an command is invoked from a thread, any response will be posted back to the thread.
 

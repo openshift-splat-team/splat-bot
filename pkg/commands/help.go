@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"strings"
 
 	"github.com/slack-go/slack"
@@ -24,9 +25,9 @@ func compileHelp() string {
 }
 
 var HelpAttributes = Attributes{
-	Regex: `\bhelp\b`,
+	Regex:          `\bhelp\b`,
 	RequireMention: true,
-	Callback: func(client *socketmode.Client, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client *socketmode.Client, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		return []slack.MsgOption{
 			slack.MsgOptionText(compileHelp(), true),
 		}, nil
