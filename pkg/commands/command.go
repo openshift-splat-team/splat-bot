@@ -19,8 +19,7 @@ type Callback func(ctx context.Context, client *socketmode.Client, evt *slackeve
 // Attributes define when and how to handle a message
 type Attributes struct {
 	// Commands when matched, the Callback is invoked.
-	Commands      []string
-	compiledRegex regexp.Regexp
+	Commands []string
 	// The number of arguments a command must have. var args are not supported.
 	RequiredArgs int
 	// Callback function called when the attributes are met
@@ -43,6 +42,12 @@ var (
 	attributes   = []Attributes{}
 	allowedUsers = map[string]bool{}
 )
+
+// AddCommand adds a handler to the list of handlers
+func AddCommand(attribute Attributes) {
+	log.Printf("adding command: %v", attribute.Commands)
+	attributes = append(attributes, attribute)
+}
 
 func Initialize(client *socketmode.Client) error {
 	attributes = append(attributes, CreateSummaryAttributes)

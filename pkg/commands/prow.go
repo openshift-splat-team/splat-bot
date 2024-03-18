@@ -124,7 +124,7 @@ func startProwRetrievalTimers() {
 
 func createProwGraph(platform string) (string, error) {
 	var resultsBuilder strings.Builder
-	re, err := regexp.Compile("(\\d\\.\\d*)")
+	re, err := regexp.Compile(`(\d\\.\d*)`)
 	if err != nil {
 		return "", err
 	}

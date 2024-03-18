@@ -2,12 +2,16 @@ package knowledge
 
 import "github.com/openshift-splat-team/splat-bot/pkg/commands"
 
-
 const (
 	DEFAULT_URL_PROMPT = `This may be a topic that I can help with. Check out these URLs:`
 	DEFAULT_LLM_PROMPT = `Can you provide a short response that attempts to answer this question: `
 )
 
+func init() {
+	commands.AddCommand(ProviderSummaryAttributes.Attributes)
+}
+
+// Knowledge defines a peice of knowledge that the bot can respond with
 type Knowledge struct {
 	commands.Attributes
 
