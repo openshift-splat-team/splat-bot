@@ -50,7 +50,8 @@ func Initialize(client *socketmode.Client) error {
 	attributes = append(attributes, SummarizeAttributes)
 	attributes = append(attributes, HelpAttributes)
 	attributes = append(attributes, UnsizedAttributes)
-	attributes = append(attributes, ProwAttibutes)
+	attributes = append(attributes, ProwAttributes)
+	attributes = append(attributes, ProwGraphAttributes)
 
 	for idx, attribute := range attributes {
 		attributes[idx].compiledRegex = *regexp.MustCompile(attribute.Regex)

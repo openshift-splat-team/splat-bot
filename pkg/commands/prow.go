@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
+	"text/tabwriter"
 	"time"
 
 	"github.com/slack-go/slack"
@@ -31,8 +33,25 @@ var (
 	mu           sync.Mutex
 )
 
-var ProwAttibutes = Attributes{
-	Regex:          `\bprow\b`,
+var ProwGraphAttributes = Attributes{
+	Regex:          `\bprow\s+graph\b`,
+	RequireMention: true,
+	Callback: func(evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+		startProwRetrievalTimers()
+
+		results, err := createProwGraph(args[2])
+		if err != nil {
+			return nil, err
+		}
+
+		return StringToBlock(results, false), nil
+	},
+	RequiredArgs: 3,
+	HelpMarkdown: "retrieve prow results: `prow graph [platform]`",
+}
+
+var ProwAttributes = Attributes{
+	Regex:          `\bprow\s+results\b`,
 	RequireMention: true,
 	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		startProwRetrievalTimers()
@@ -44,8 +63,8 @@ var ProwAttibutes = Attributes{
 
 		return StringToBlock(results, false), nil
 	},
-	RequiredArgs: 4,
-	HelpMarkdown: "retrieve prow results: `prow [platform] [version] [state]`",
+	RequiredArgs: 5,
+	HelpMarkdown: "retrieve prow results: `prow results [platform] [version] [state]`",
 }
 
 func fetchProwJobs() (*prowv1.ProwJobList, error) {
@@ -103,6 +122,66 @@ func startProwRetrievalTimers() {
 	}
 }
 
+func createProwGraph(platform string) (string, error) {
+	var resultsBuilder strings.Builder
+	re, err := regexp.Compile("(\\d\\.\\d*)")
+	if err != nil {
+		return "", err
+	}
+
+	results := make(map[string]map[prowv1.ProwJobState]string)
+
+	mu.Lock()
+	if prowJobList != nil {
+		periodicJobs = make([]prowv1.ProwJob, 0)
+
+		periodicJobs = slices.DeleteFunc(prowJobList.Items, func(p prowv1.ProwJob) bool {
+			return p.Spec.Type != prowv1.PeriodicJob || !strings.Contains(p.Spec.Job, "nightly") || !p.Complete()
+		})
+
+		periodicJobs = slices.DeleteFunc(periodicJobs, func(p prowv1.ProwJob) bool {
+			return !strings.Contains(p.Spec.Job, platform)
+		})
+
+		for _, j := range periodicJobs {
+			versionRegex := re.FindStringSubmatch(j.Spec.Job)
+			ocpVersion := versionRegex[0]
+
+			if _, ok := results[ocpVersion]; !ok {
+				results[ocpVersion] = make(map[prowv1.ProwJobState]string)
+			}
+			switch j.Status.State {
+			case prowv1.FailureState:
+				results[ocpVersion][prowv1.FailureState] += "F"
+			case prowv1.SuccessState:
+				results[ocpVersion][prowv1.SuccessState] += "S"
+			}
+		}
+		tbwrite := tabwriter.NewWriter(&resultsBuilder, 0, 0, 0, ' ', tabwriter.Debug)
+
+		_, err := fmt.Fprint(tbwrite, "```\n")
+		if err != nil {
+			return "", err
+		}
+		for k, v := range results {
+			_, err := fmt.Fprintf(tbwrite, "%s\t%s\t%s\t\n", k, v[prowv1.SuccessState], v[prowv1.FailureState])
+			if err != nil {
+				return "", err
+			}
+		}
+		_, err = fmt.Fprint(tbwrite, "\n```")
+		if err != nil {
+			return "", err
+		}
+
+		err = tbwrite.Flush()
+		if err != nil {
+			return "", err
+		}
+	}
+	mu.Unlock()
+	return resultsBuilder.String(), nil
+}
 func queryProwResults(platform, version string, prowJobState prowv1.ProwJobState) (string, error) {
 	var resultsBuilder strings.Builder
 	numToRetrieve := 10
