@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/slack-go/slack"
 	"log"
 	"os"
 
@@ -55,9 +58,21 @@ func main() {
 					log.Printf("error encountered while processing event: %v", err)
 				}
 			case socketmode.EventTypeInteractive:
+				fmt.Printf("GOT INTERACTIVE EVENT: %v\n", evt)
+				client.Ack(*evt.Request)
 
+				data := evt.Data.(slack.InteractionCallback)
+
+				// This outputs the event data for debugging
+				buffer := bytes.NewBuffer([]byte{})
+				if err := json.NewEncoder(buffer).Encode(data); err != nil {
+					fmt.Printf("Error: %v", err)
+				} else {
+					fmt.Printf(buffer.String())
+				}
+
+				client.PostMessage(data.Channel.ID, slack.MsgOptionDeleteOriginal(data.ResponseURL))
 			case socketmode.EventTypeSlashCommand:
-
 			default:
 				fmt.Fprintf(os.Stderr, "Unexpected event type received: %s\n", evt.Type)
 			}

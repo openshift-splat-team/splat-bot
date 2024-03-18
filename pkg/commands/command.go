@@ -144,7 +144,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 	}
 
 	for _, attribute := range getAttributes() {
-		fmt.Printf("Checking command: %v\n", attribute.Commands)
+		log.Printf("Checking command: %v", attribute.Commands)
 		if attribute.RequireMention && (!ContainsBotMention(msg.Text) || !isAppMention) {
 			continue
 		}
@@ -155,7 +155,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 		}
 
 		if checkForCommand(args, attribute) {
-			fmt.Printf("Found command: %v\n", attribute.Commands)
+			log.Printf("Found command: %v", attribute.Commands)
 			// Now that we found command, make sure it can be used by current user.
 			if !attribute.AllowNonSplatUsers {
 				err := isAllowedUser(msg)
@@ -197,7 +197,12 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 				} else if len(GetThreadUrl(msg)) > 0 {
 					response = append(response, slack.MsgOptionTS(msg.ThreadTimeStamp))
 				}
-				_, _, err = client.PostMessage(msg.Channel, response...)
+
+				if attribute.ResponseIsEphemeral {
+					_, err = client.PostEphemeral(msg.Channel, msg.User, response...)
+				} else {
+					_, _, err = client.PostMessage(msg.Channel, response...)
+				}
 				if err != nil {
 					fmt.Printf("failed responding to message: %v", err)
 				}
