@@ -18,8 +18,8 @@ type Callback func(ctx context.Context, client *socketmode.Client, evt *slackeve
 
 // Attributes define when and how to handle a message
 type Attributes struct {
-	// Regex when matched, the Callback is invoked.
-	Regex         string
+	// Commands when matched, the Callback is invoked.
+	Commands      []string
 	compiledRegex regexp.Regexp
 	// The number of arguments a command must have. var args are not supported.
 	RequiredArgs int
@@ -52,10 +52,6 @@ func Initialize(client *socketmode.Client) error {
 	attributes = append(attributes, UnsizedAttributes)
 	attributes = append(attributes, ProwAttributes)
 	attributes = append(attributes, ProwGraphAttributes)
-
-	for idx, attribute := range attributes {
-		attributes[idx].compiledRegex = *regexp.MustCompile(attribute.Regex)
-	}
 
 	allowed := os.Getenv("SLACK_ALLOWED_USERS")
 	if len(allowed) == 0 {
@@ -149,10 +145,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 			args = args[1:]
 		}
 
-		normalizedArgs := strings.Join(args, " ")
-
-		if strings.HasPrefix(normalizedArgs, attribute.Regex) {
-			log.Printf("%s - %s", normalizedArgs, attribute.Regex)
+		if checkForCommand(args, attribute) {
 			var response []slack.MsgOption
 			var err error
 			inThread := len(GetThreadUrl(msg)) > 0
@@ -193,4 +186,15 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 	}
 
 	return nil
+}
+
+func checkForCommand(args []string, attribute Attributes) bool {
+	match := true
+	for index, command := range attribute.Commands {
+		if command != args[index] {
+			match = false
+			break
+		}
+	}
+	return match
 }
