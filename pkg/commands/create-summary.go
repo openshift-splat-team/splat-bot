@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/openshift-splat-team/jira-bot/cmd/issue"
@@ -10,16 +11,16 @@ import (
 )
 
 var CreateSummaryAttributes = Attributes{
-	Regex: `jira create-with-summary `,
+	Regex:          `jira create-with-summary `,
 	RequireMention: true,
-	Callback: func(client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := GetThreadUrl(evt)
 		description := ""
 		if len(url) > 0 {
 			description = fmt.Sprintf("%s\n\ncreated from thread: %s", description, url)
 		}
-		MAX_LEN:=250
-		title, err := handlePrompt(PROMPT_ISSUE_TITLE, client, evt)
+		MAX_LEN := 250
+		title, err := handlePrompt(ctx, PROMPT_ISSUE_TITLE, client, evt)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get title: %v", err)
 		}
@@ -27,7 +28,7 @@ var CreateSummaryAttributes = Attributes{
 			title = title[:MAX_LEN]
 		}
 
-		response, err := handlePrompt(PROMPT_ISSUE_SUMMARY, client, evt)
+		response, err := handlePrompt(ctx, PROMPT_ISSUE_SUMMARY, client, evt)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get summary: %v", err)
 		}
@@ -44,4 +45,3 @@ var CreateSummaryAttributes = Attributes{
 	RequiredArgs: 4,
 	HelpMarkdown: "create a Jira issue with a summary of the thread: `jira create-with-summary [project] [type]`",
 }
- 

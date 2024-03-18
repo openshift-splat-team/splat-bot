@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +14,7 @@ import (
 )
 
 func main() {
+	ctx := context.TODO()
 	log.SetOutput(os.Stdout)
 
 	client, err := slackutil.GetClient()
@@ -47,7 +49,7 @@ func main() {
 				fmt.Printf("Event received: %+v\n", eventsAPIEvent)
 
 				client.Ack(*evt.Request)
-				err = commands.Handler(client, eventsAPIEvent)
+				err = commands.Handler(ctx, client, eventsAPIEvent)
 				if err != nil {
 					log.Printf("error encountered while processing event: %v", err)
 				}

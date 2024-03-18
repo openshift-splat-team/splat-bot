@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -33,7 +34,7 @@ var (
 var ProwAttibutes = Attributes{
 	Regex:          `\bprow\b`,
 	RequireMention: true,
-	Callback: func(client *socketmode.Client,evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		startProwRetrievalTimers()
 
 		results, err := queryProwResults(args[1], args[2], prowv1.ProwJobState(args[3]))

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/openshift-splat-team/jira-bot/cmd/issue"
@@ -10,9 +11,9 @@ import (
 )
 
 var CreateAttributes = Attributes{
-	Regex: `jira create `,
+	Regex:          `jira create `,
 	RequireMention: true,
-	Callback: func(client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := GetThreadUrl(evt)
 		description := args[4]
 		if len(url) > 0 {

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -11,9 +12,9 @@ import (
 )
 
 var UnsizedAttributes = Attributes{
-	Regex: `jira unsized `,
+	Regex:          `jira unsized `,
 	RequireMention: true,
-	Callback: func(client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		issues, err := util.GetUnsizedStories()
 		if err != nil {
 			return WrapErrorToBlock(err, "error querying issues"), nil
