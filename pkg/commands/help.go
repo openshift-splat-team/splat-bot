@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
@@ -27,7 +28,7 @@ func compileHelp() string {
 	return markdownBuffer.String()
 }
 
-var HelpAttributes = Attributes{
+var HelpAttributes = data.Attributes{
 	Commands:       []string{"help"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client *socketmode.Client, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {

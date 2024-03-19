@@ -3,11 +3,11 @@ package knowledge
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
-	"unicode"
 
+	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/commands"
+	vsphere "github.com/openshift-splat-team/splat-bot/pkg/knowledge/vsphere"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
@@ -19,63 +19,15 @@ const (
 )
 
 var (
-	knowledgeEntries = []Knowledge{
-		MigrationTopicAttributes,
-		ODFTopicAttributes,
-		VSphere67TopicAttributes,
+	knowledgeEntries = []data.Knowledge{
+		vsphere.MigrationTopicAttributes,
+		vsphere.ODFTopicAttributes,
+		vsphere.VSphere67TopicAttributes,
 	}
 )
 
-// tokensPresent checks if all of the args are present in the argMap
-func tokensPresentAND(argMap map[string]string, args ...string) bool {
-	matchedArgs := map[string]bool{}
-	for _, arg := range args {
-		arg = strings.ToLower(arg)
-		if _, exists := argMap[arg]; exists {
-			matchedArgs[arg] = true
-		}
-		if len(matchedArgs) == len(args) {
-			return true
-		}
-	}
-	return false
-}
-
-// tokensPresent checks if any of the args are present in the argMap
-func tokensPresentOR(argMap map[string]string, args ...string) bool {
-	for _, arg := range args {
-		if _, exists := argMap[strings.ToLower(arg)]; exists {
-			log.Printf("found token: %s", arg)
-			return true
-		}
-	}
-	return false
-}
-
-func stripPunctuation(s string) string {
-	lastChar := s[len(s)-1]
-	if unicode.IsPunct(rune(lastChar)) {
-		return s[:len(s)-1]
-	}
-	return s
-}
-
-// normalizeTokens convert all tokens to lower case for case insensitive matching
-func normalizeTokens(args []string) map[string]string {
-	normalized := map[string]string{}
-	for _, arg := range args {
-		if len(arg) == 0 {
-			continue
-		}
-
-		arg = stripPunctuation(arg)
-		normalized[strings.ToLower(arg)] = arg
-	}
-	return normalized
-}
-
 func defaultKnowledgeHandler(ctx context.Context, client *socketmode.Client, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
-	matches := []Knowledge{}
+	matches := []data.Knowledge{}
 
 	for _, entry := range knowledgeEntries {
 		if entry.MessageOfInterest(args, entry.Attributes) {
@@ -105,23 +57,8 @@ func init() {
 	}
 }
 
-// Knowledge defines a peice of knowledge that the bot can respond with
-type Knowledge struct {
-	commands.Attributes
-
-	// MarkdownPrompt message that is returned when the prompt matches
-	MarkdownPrompt string
-
-	// URLS urls to be appended to a response. if MarkdownPrompt isn't defined, URLS will be
-	// attached to a reasonable default message.
-	URLS []string
-
-	// when true, the message is sent to an LLM to construct an answer.
-	InvokeLLM bool
-}
-
-var KnowledgeCommandAttributes = commands.Attributes{
-	MessageOfInterest: func(args []string, attribute commands.Attributes) bool {
+var KnowledgeCommandAttributes = data.Attributes{
+	MessageOfInterest: func(args []string, attribute data.Attributes) bool {
 		for _, enrty := range knowledgeEntries {
 			if enrty.MessageOfInterest(args, attribute) {
 				return true

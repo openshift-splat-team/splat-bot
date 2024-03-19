@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -73,7 +74,7 @@ func getFeedSummary(lastNDays int, provider string, additionalContext ...string)
 	return response.String(), nil
 }
 
-var ProviderSummaryAttributes = Attributes{
+var ProviderSummaryAttributes = data.Attributes{
 	Commands:       []string{"provider-summary"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
