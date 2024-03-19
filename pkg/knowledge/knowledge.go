@@ -21,6 +21,7 @@ const (
 var (
 	knowledgeEntries = []Knowledge{
 		MigrationTopicAttributes,
+		ODFTopicAttributes,
 	}
 )
 
