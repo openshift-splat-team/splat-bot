@@ -27,7 +27,7 @@ func GenerateResponse(ctx context.Context, prompt string) (string, error) {
 		model = "tinyllama"
 	}
 
-	llm, err := ollama.New(ollama.WithModel(model))
+	llm, err := ollama.New(ollama.WithModel(model), ollama.WithServerURL(endpoint))
 	if err != nil {
 		log.Fatal(err)
 	}
