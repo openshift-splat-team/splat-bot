@@ -17,7 +17,7 @@ type Prompt string
 
 var (
 	PROMPT_ISSUE_TITLE   = Prompt("can you summarize this thread to a single line? The line should be less than 100 characters. ")
-	PROMPT_ISSUE_SUMMARY = Prompt("can you summarize this thread a short paragraph?")
+	PROMPT_ISSUE_SUMMARY = Prompt("provide a brief summary of the thread:")
 )
 
 var SummarizeAttributes = data.Attributes{
@@ -29,7 +29,7 @@ var SummarizeAttributes = data.Attributes{
 		if err != nil {
 			return nil, fmt.Errorf("unable to get summary: %v", err)
 		}
-		return StringToBlock(fmt.Sprintf("WIP: will summarize thread: %s", response), false), nil
+		return StringToBlock(response, false), nil
 	},
 	RequiredArgs: 1,
 	HelpMarkdown: "summarize this thread: `summary`",
