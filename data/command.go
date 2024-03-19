@@ -36,4 +36,6 @@ type Attributes struct {
 	AllowNonSplatUsers bool
 	// This command will not be included in the help message.
 	ExcludeFromHelp bool
+	// DontGlobQuotes when true, quotes are not globbed.  This is useful for knowledge commands that need discrete tokens.
+	DontGlobQuotes bool
 }

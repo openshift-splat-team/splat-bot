@@ -59,20 +59,24 @@ func isAllowedUser(evt *slackevents.MessageEvent) error {
 	}
 	return nil
 }
-func tokenize(msgText string) []string {
+func tokenize(msgText string, glob bool) []string {
 	var tokens []string
-	re := regexp.MustCompile(`"([^"]*?)"|(\S+)`)
-	matches := re.FindAllStringSubmatch(msgText, -1)
+	if glob {
+		re := regexp.MustCompile(`"([^"]*?)"|(\S+)`)
+		matches := re.FindAllStringSubmatch(msgText, -1)
 
-	for _, match := range matches {
-		if match[1] != "" {
-			// Remove leading and trailing quotation marks
-			tokens = append(tokens, strings.Trim(match[1], "\""))
-		} else {
-			tokens = append(tokens, match[2])
+		for _, match := range matches {
+			if match[1] != "" {
+				// Remove leading and trailing quotation marks
+				tokens = append(tokens, strings.Trim(match[1], "\""))
+			} else {
+				tokens = append(tokens, match[2])
+			}
 		}
+		return tokens
+	} else {
+		return strings.Split(msgText, " ")
 	}
-	return tokens
 }
 
 func getDMChannelID(client *socketmode.Client, evt *slackevents.MessageEvent) (string, error) {
@@ -129,7 +133,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 			}
 		}
 
-		args := tokenize(msg.Text)
+		args := tokenize(msg.Text, !attribute.DontGlobQuotes)
 		if attribute.RequireMention {
 			args = args[1:]
 		}
