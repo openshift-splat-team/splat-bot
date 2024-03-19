@@ -5,12 +5,13 @@ import (
 	"fmt"
 
 	"github.com/openshift-splat-team/jira-bot/cmd/issue"
+	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 )
 
-var CreateSummaryAttributes = Attributes{
+var CreateSummaryAttributes = data.Attributes{
 	Commands:       []string{"jira", "create-with-summary"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {

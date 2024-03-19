@@ -9,49 +9,20 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 )
 
-type Callback func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error)
-
-type MessageOfInterest func(args []string, attribute Attributes) bool
-
-// Attributes define when and how to handle a message
-type Attributes struct {
-	// Commands when matched, the Callback is invoked.
-	Commands []string
-	// MessageOfInterest supercedes Commands. If MessageOfInterest is set, Commands is ignored.  This is useful for more complex matching.
-	MessageOfInterest MessageOfInterest
-	// The number of arguments a command must have. var args are not supported.
-	RequiredArgs int
-	// Callback function called when the attributes are met
-	Callback Callback
-	// Rank: Future - in a situation where multiple regexes match, this allows a priority to be assigned.
-	Rank int64
-	// RequireMention when true, @splat-bot must be used to invoke the command.
-	RequireMention bool
-	// HelpMarkdown is markdown that is contributed with the bot shows help.
-	HelpMarkdown string
-	// RespondInDM responds in a DM to the user.
-	RespondInDM bool
-	// MustBeInThread the attribute will only be recognized in a thread.
-	MustBeInThread bool
-	// AllowNonSplatUsers by default, only members of @splat-team can interact with the bot
-	AllowNonSplatUsers bool
-	// This command will not be included in the help message.
-	ExcludeFromHelp bool
-}
-
 var (
-	attributes   = []Attributes{}
+	attributes   = []data.Attributes{}
 	allowedUsers = map[string]bool{}
 )
 
 // AddCommand adds a handler to the list of handlers. Matching of the message can be overriden
 // by providing a MessageOfInterest function.
-func AddCommand(attribute Attributes, handler ...MessageOfInterest) {
+func AddCommand(attribute data.Attributes, handler ...data.MessageOfInterest) {
 	log.Printf("adding command: %v", attribute.Commands)
 	if len(handler) > 0 {
 		attribute.MessageOfInterest = handler[0]
@@ -88,20 +59,24 @@ func isAllowedUser(evt *slackevents.MessageEvent) error {
 	}
 	return nil
 }
-func tokenize(msgText string) []string {
+func tokenize(msgText string, glob bool) []string {
 	var tokens []string
-	re := regexp.MustCompile(`"([^"]*?)"|(\S+)`)
-	matches := re.FindAllStringSubmatch(msgText, -1)
+	if glob {
+		re := regexp.MustCompile(`"([^"]*?)"|(\S+)`)
+		matches := re.FindAllStringSubmatch(msgText, -1)
 
-	for _, match := range matches {
-		if match[1] != "" {
-			// Remove leading and trailing quotation marks
-			tokens = append(tokens, strings.Trim(match[1], "\""))
-		} else {
-			tokens = append(tokens, match[2])
+		for _, match := range matches {
+			if match[1] != "" {
+				// Remove leading and trailing quotation marks
+				tokens = append(tokens, strings.Trim(match[1], "\""))
+			} else {
+				tokens = append(tokens, match[2])
+			}
 		}
+		return tokens
+	} else {
+		return strings.Split(msgText, " ")
 	}
-	return tokens
 }
 
 func getDMChannelID(client *socketmode.Client, evt *slackevents.MessageEvent) (string, error) {
@@ -158,7 +133,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 			}
 		}
 
-		args := tokenize(msg.Text)
+		args := tokenize(msg.Text, !attribute.DontGlobQuotes)
 		if attribute.RequireMention {
 			args = args[1:]
 		}
@@ -206,7 +181,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 	return nil
 }
 
-func checkForCommand(args []string, attribute Attributes) bool {
+func checkForCommand(args []string, attribute data.Attributes) bool {
 	match := true
 	for index, command := range attribute.Commands {
 		if command != args[index] {

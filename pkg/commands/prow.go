@@ -12,6 +12,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
@@ -32,7 +33,7 @@ var (
 	mu           sync.Mutex
 )
 
-var ProwGraphAttributes = Attributes{
+var ProwGraphAttributes = data.Attributes{
 	Commands:       []string{"prow", "graph"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
@@ -49,7 +50,7 @@ var ProwGraphAttributes = Attributes{
 	HelpMarkdown: "retrieve prow results: `prow graph [platform]`",
 }
 
-var ProwAttributes = Attributes{
+var ProwAttributes = data.Attributes{
 	Commands:       []string{"prow", "results"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {

@@ -1,14 +1,15 @@
-package knowledge
+package vsphere
 
 import (
-	"github.com/openshift-splat-team/splat-bot/pkg/commands"
+	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 )
 
-var ODFTopicAttributes = Knowledge{
-	Attributes: commands.Attributes{
-		MessageOfInterest: func(args []string, attribute commands.Attributes) bool {
-			argMap := normalizeTokens(args)
-			return tokensPresentOR(argMap, "odf")
+var ODFTopicAttributes = data.Knowledge{
+	Attributes: data.Attributes{
+		MessageOfInterest: func(args []string, attribute data.Attributes) bool {
+			argMap := util.NormalizeTokens(args)
+			return util.TokensPresentOR(argMap, "odf")
 		},
 	},
 	MarkdownPrompt: `ODF typically falls outside the expertise of this channel.  You might check out the ODF documentation or reach out in:

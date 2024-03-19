@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -19,7 +20,7 @@ var (
 	PROMPT_ISSUE_SUMMARY = Prompt("can you summarize this thread a short paragraph?")
 )
 
-var SummarizeAttributes = Attributes{
+var SummarizeAttributes = data.Attributes{
 	Commands:       []string{"summary"},
 	RequireMention: true,
 	RespondInDM:    false,

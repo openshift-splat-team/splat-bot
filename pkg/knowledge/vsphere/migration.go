@@ -1,18 +1,17 @@
-package knowledge
+package vsphere
 
 import (
-	"log"
-
-	"github.com/openshift-splat-team/splat-bot/pkg/commands"
+	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
+	knowledge "github.com/openshift-splat-team/splat-bot/pkg/util"
 )
 
-var MigrationTopicAttributes = Knowledge{
-	Attributes: commands.Attributes{
-		MessageOfInterest: func(args []string, attribute commands.Attributes) bool {
-			log.Printf("checking for migration topic: %v", args)
-			argMap := normalizeTokens(args)
-			if tokensPresentOR(argMap, "migration", "vmotion") &&
-				tokensPresentOR(argMap, "vsphere", "vmware") {
+var MigrationTopicAttributes = data.Knowledge{
+	Attributes: data.Attributes{
+		MessageOfInterest: func(args []string, attribute data.Attributes) bool {
+			argMap := util.NormalizeTokens(args)
+			if knowledge.TokensPresentOR(argMap, "migration", "vmotion") &&
+				knowledge.TokensPresentOR(argMap, "vsphere", "vmware") {
 				return true
 			}
 			return false
