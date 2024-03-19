@@ -22,6 +22,7 @@ var (
 	knowledgeEntries = []Knowledge{
 		MigrationTopicAttributes,
 		ODFTopicAttributes,
+		VSphere67TopicAttributes,
 	}
 )
 
@@ -52,12 +53,11 @@ func tokensPresentOR(argMap map[string]string, args ...string) bool {
 }
 
 func stripPunctuation(s string) string {
-	return strings.Map(func(r rune) rune {
-		if unicode.IsLetter(r) || unicode.IsNumber(r) {
-			return r
-		}
-		return -1
-	}, s)
+	lastChar := s[len(s)-1]
+	if unicode.IsPunct(rune(lastChar)) {
+		return s[:len(s)-1]
+	}
+	return s
 }
 
 // normalizeTokens convert all tokens to lower case for case insensitive matching
@@ -67,6 +67,7 @@ func normalizeTokens(args []string) map[string]string {
 		if len(arg) == 0 {
 			continue
 		}
+
 		arg = stripPunctuation(arg)
 		normalized[strings.ToLower(arg)] = arg
 	}
@@ -75,7 +76,6 @@ func normalizeTokens(args []string) map[string]string {
 
 func defaultKnowledgeHandler(ctx context.Context, client *socketmode.Client, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 	matches := []Knowledge{}
-	log.Println("defaultKnowledgeHandler")
 
 	for _, entry := range knowledgeEntries {
 		if entry.MessageOfInterest(args, entry.Attributes) {
