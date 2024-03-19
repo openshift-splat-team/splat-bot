@@ -38,4 +38,6 @@ type Attributes struct {
 	ExcludeFromHelp bool
 	// DontGlobQuotes when true, quotes are not globbed.  This is useful for knowledge commands that need discrete tokens.
 	DontGlobQuotes bool
+	// RespondInChannel responds in the channel to the user. If false, responds in a thread.
+	RespondInChannel bool
 }
