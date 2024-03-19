@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -20,7 +21,7 @@ const (
 var (
 	providers = map[string][]string{
 		"vsphere": {
-			"https://feeds.feedburner.com/vmwareblogsfeed",
+			"https://feeds.feedburner.com/vmwarekbfeed",
 		},
 
 		"aws": {
@@ -32,46 +33,40 @@ var (
 		},
 
 		"gcp": {
-			"https://cloud.google.com/feeds/gcp-release-notes.xml",
+			"https://blog.google/rss/",
 		},
 	}
 )
 
-func getFeedSummary(lastNDays int, provider string, additionalContext ...string) (string, error) {
-	//ctx := context.TODO()
+func getFeedSummary(lastNDays int, provider string, additionalContext ...string) ([]string, error) {
+	ctx := context.TODO()
 	now := time.Now()
 	fiveDaysAgo := now.AddDate(0, 0, lastNDays*-1)
-
+	blocks := []string{}
 	var urls []string
 
 	if _urls, exists := providers[strings.ToLower(provider)]; !exists {
-		return "", fmt.Errorf("%s is not a supported provider", provider)
+		return nil, fmt.Errorf("%s is not a supported provider", provider)
 	} else {
 		urls = _urls
 	}
 
-	var response strings.Builder
-
 	for _, url := range urls {
 		feedItems, err := util.ParseFeed(url)
 		if err != nil {
-			return "", fmt.Errorf("unable to parse feed: %v", err)
+			return nil, fmt.Errorf("unable to parse feed: %v", err)
 		}
 		inDateRange := util.GetItemsBetweenDates(feedItems, fiveDaysAgo, now)
-
 		for _, item := range inDateRange {
-			// TO-DO: once we get a performant way to get the summaries, we can turn this on
-			/*summary, err := util.GenerateResponse(ctx, item.Description)
+			summary, err := util.GenerateResponse(ctx, item.Description)
 			if err != nil {
-				return "", fmt.Errorf("failure while getting response from LLM: %v", err)
-			}*/
-			//response.WriteString(fmt.Sprintf("Title: %s\nPublished: %s\nLink: %s\nDescription: %s\n\n", item.Title, item.Published, item.Link, summary))
-			response.WriteString(fmt.Sprintf("%s: <%s|%s>\n\n", item.Published, item.Link, item.Title))
+				return nil, fmt.Errorf("failure while getting response from LLM: %v", err)
+			}
+			blocks = append(blocks, fmt.Sprintf("<%s|%s>\n*Published*: %s\n*Generated Article Summary:* %s\n\n", item.Link, item.Title, item.Published, summary))
 		}
-
 	}
 
-	return response.String(), nil
+	return blocks, nil
 }
 
 var ProviderSummaryAttributes = data.Attributes{
@@ -86,10 +81,11 @@ var ProviderSummaryAttributes = data.Attributes{
 
 		summary, err := getFeedSummary(5, provider)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get feed summary: %v", err)
+			log.Printf("unable to get feed summary: %v", err)
+			summary = append(summary, fmt.Sprintf("unavailable: %v", err))
 		}
 
-		return StringToBlock(summary, false), nil
+		return StringsToBlockUnfurl(summary, false, false), nil
 	},
 	RequiredArgs: 2,
 	HelpMarkdown: "summarize RSS feeds for various providers: `provider-summary [aws|vsphere|gcp|azure]`",

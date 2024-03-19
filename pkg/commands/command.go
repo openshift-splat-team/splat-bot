@@ -166,6 +166,8 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 						fmt.Printf("failed getting channel ID: %v", err)
 					}
 					msg.Channel = channelID
+				} else if !attribute.RespondInChannel {
+					response = append(response, slack.MsgOptionTS(msg.TimeStamp))
 				} else if len(GetThreadUrl(msg)) > 0 {
 					response = append(response, slack.MsgOptionTS(msg.ThreadTimeStamp))
 				}

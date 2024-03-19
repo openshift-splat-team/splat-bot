@@ -14,6 +14,29 @@ const (
 	JIRA_BASE_URL = "https://issues.redhat.com"
 )
 
+func StringsToBlockUnfurl(messages []string, useMarkdown, unfurlLinks bool) []slack.MsgOption {
+	messageBlocks := []slack.Block{}
+
+	for _, message := range messages {
+		messageBlocks = append(messageBlocks,
+			slack.NewSectionBlock(
+				slack.NewTextBlockObject("mrkdwn", message, false, false),
+				nil,
+				nil,
+			),
+			slack.NewDividerBlock(),
+		)
+
+	}
+
+	/*if unfurlLinks {
+		messageBlocks = append(messageBlocks, slack.MsgOptionEnableLinkUnfurl())
+	}*/
+	return []slack.MsgOption{
+		slack.MsgOptionBlocks(messageBlocks...),
+	}
+}
+
 func StringToBlockUnfurl(message string, useMarkdown, unfurlLinks bool) []slack.MsgOption {
 	options := []slack.MsgOption{
 		slack.MsgOptionText(message, useMarkdown),

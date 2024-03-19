@@ -22,7 +22,12 @@ func GenerateResponse(ctx context.Context, prompt string) (string, error) {
 		return "", errors.New("OLLAMA_ENDPOINT must be exported")
 	}
 
-	llm, err := ollama.New(ollama.WithModel("llama2"))
+	model := os.Getenv("OLLAMA_MODEL")
+	if len(model) == 0 {
+		model = "tinyllama"
+	}
+
+	llm, err := ollama.New(ollama.WithModel(model))
 	if err != nil {
 		log.Fatal(err)
 	}
