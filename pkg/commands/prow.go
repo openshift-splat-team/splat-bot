@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"regexp"
-	"slices"
 	"strings"
 	"sync"
 	"text/tabwriter"
@@ -122,9 +121,36 @@ func startProwRetrievalTimers() {
 	}
 }
 
+func removeJob(platform, version string, prowJobState *prowv1.ProwJobState, job prowv1.ProwJob) bool {
+	if !job.Complete() {
+		return true
+	}
+	if job.Spec.Type != prowv1.PeriodicJob {
+		return true
+	}
+	if !strings.Contains(job.Spec.Job, "nightly") {
+		return true
+	}
+	if !strings.Contains(job.Spec.Job, platform) {
+		return true
+	}
+	if version != "" {
+		if !strings.Contains(job.Spec.Job, version) {
+			return true
+		}
+	}
+	if prowJobState != nil {
+		if job.Status.State != *prowJobState {
+			return true
+		}
+	}
+
+	return false
+}
+
 func createProwGraph(platform string) (string, error) {
 	var resultsBuilder strings.Builder
-	re, err := regexp.Compile(`(\d\\.\d*)`)
+	re, err := regexp.Compile(`(\d\.\d*)`)
 	if err != nil {
 		return "", err
 	}
@@ -135,16 +161,18 @@ func createProwGraph(platform string) (string, error) {
 	if prowJobList != nil {
 		periodicJobs = make([]prowv1.ProwJob, 0)
 
-		periodicJobs = slices.DeleteFunc(prowJobList.Items, func(p prowv1.ProwJob) bool {
-			return p.Spec.Type != prowv1.PeriodicJob || !strings.Contains(p.Spec.Job, "nightly") || !p.Complete()
-		})
-
-		periodicJobs = slices.DeleteFunc(periodicJobs, func(p prowv1.ProwJob) bool {
-			return !strings.Contains(p.Spec.Job, platform)
-		})
+		for _, pj := range prowJobList.Items {
+			if !removeJob(platform, "", nil, pj) {
+				periodicJobs = append(periodicJobs, pj)
+			}
+		}
 
 		for _, j := range periodicJobs {
 			versionRegex := re.FindStringSubmatch(j.Spec.Job)
+
+			if versionRegex == nil || len(versionRegex) < 1 {
+				continue
+			}
 			ocpVersion := versionRegex[0]
 
 			if _, ok := results[ocpVersion]; !ok {
@@ -179,6 +207,7 @@ func createProwGraph(platform string) (string, error) {
 			return "", err
 		}
 	}
+	periodicJobs = make([]prowv1.ProwJob, 0)
 	mu.Unlock()
 	return resultsBuilder.String(), nil
 }
@@ -190,13 +219,11 @@ func queryProwResults(platform, version string, prowJobState prowv1.ProwJobState
 	if prowJobList != nil {
 		periodicJobs = make([]prowv1.ProwJob, 0)
 
-		periodicJobs = slices.DeleteFunc(prowJobList.Items, func(p prowv1.ProwJob) bool {
-			return p.Spec.Type != prowv1.PeriodicJob || !strings.Contains(p.Spec.Job, "nightly") || !strings.Contains(p.Spec.Job, platform) || !p.Complete() || !strings.Contains(p.Spec.Job, version)
-		})
-
-		periodicJobs = slices.DeleteFunc(periodicJobs, func(p prowv1.ProwJob) bool {
-			return p.Status.State != prowJobState
-		})
+		for _, pj := range prowJobList.Items {
+			if !removeJob(platform, version, &prowJobState, pj) {
+				periodicJobs = append(periodicJobs, pj)
+			}
+		}
 
 		periodicJobLength := len(periodicJobs)
 		if periodicJobLength > numToRetrieve {
@@ -209,6 +236,7 @@ func queryProwResults(platform, version string, prowJobState prowv1.ProwJobState
 			fmt.Fprintf(&resultsBuilder, "<%s|%s>\n", j.Status.URL, j.Spec.Job)
 		}
 	}
+	periodicJobs = make([]prowv1.ProwJob, 0)
 	mu.Unlock()
 	return resultsBuilder.String(), nil
 }
