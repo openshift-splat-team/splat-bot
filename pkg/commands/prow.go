@@ -56,7 +56,7 @@ var ProwAttributes = Attributes{
 	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		startProwRetrievalTimers()
 
-		results, err := queryProwResults(args[1], args[2], prowv1.ProwJobState(args[3]))
+		results, err := queryProwResults(args[2], args[3], prowv1.ProwJobState(args[4]))
 		if err != nil {
 			return nil, err
 		}
