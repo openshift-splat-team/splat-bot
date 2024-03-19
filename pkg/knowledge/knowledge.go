@@ -23,6 +23,7 @@ var (
 		vsphere.MigrationTopicAttributes,
 		vsphere.ODFTopicAttributes,
 		vsphere.VSphere67TopicAttributes,
+		vsphere.InstallationX509Attributes,
 	}
 )
 
@@ -53,6 +54,7 @@ func defaultKnowledgeHandler(ctx context.Context, client *socketmode.Client, eve
 func init() {
 	for _, entry := range knowledgeEntries {
 		entry.Callback = defaultKnowledgeHandler
+		entry.DontGlobQuotes = true
 		commands.AddCommand(entry.Attributes)
 	}
 }

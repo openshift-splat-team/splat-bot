@@ -1,7 +1,6 @@
 package util
 
 import (
-	"log"
 	"strings"
 	"unicode"
 )
@@ -25,7 +24,6 @@ func TokensPresentAND(argMap map[string]string, args ...string) bool {
 func TokensPresentOR(argMap map[string]string, args ...string) bool {
 	for _, arg := range args {
 		if _, exists := argMap[strings.ToLower(arg)]; exists {
-			log.Printf("found token: %s", arg)
 			return true
 		}
 	}
@@ -33,9 +31,16 @@ func TokensPresentOR(argMap map[string]string, args ...string) bool {
 }
 
 func StripPunctuation(s string) string {
+	if len(s) < 2 {
+		return s
+	}
+	firstChar := s[0]
+	if unicode.IsPunct(rune(firstChar)) {
+		s = s[1:]
+	}
 	lastChar := s[len(s)-1]
 	if unicode.IsPunct(rune(lastChar)) {
-		return s[:len(s)-1]
+		s = s[:len(s)-1]
 	}
 	return s
 }
@@ -48,8 +53,8 @@ func NormalizeTokens(args []string) map[string]string {
 			continue
 		}
 
-		arg = StripPunctuation(arg)
-		normalized[strings.ToLower(arg)] = arg
+		arg = strings.ToLower(StripPunctuation(arg))
+		normalized[arg] = arg
 	}
 	return normalized
 }
