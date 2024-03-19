@@ -14,6 +14,9 @@ func compileHelp() string {
 	markdownBuffer.WriteString("*SPLAT Bot Help*\n")
 	markdownBuffer.WriteString("SPLAT Bot provides automation for the team\n")
 	for _, attribute := range attributes {
+		if attribute.ExcludeFromHelp {
+			continue
+		}
 		markdownBuffer.WriteString(attribute.HelpMarkdown)
 		if attribute.RequireMention {
 			markdownBuffer.WriteString("*")

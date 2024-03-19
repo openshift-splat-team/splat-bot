@@ -1,4 +1,4 @@
-package knowledge
+package commands
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openshift-splat-team/splat-bot/pkg/commands"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -74,26 +73,23 @@ func getFeedSummary(lastNDays int, provider string, additionalContext ...string)
 	return response.String(), nil
 }
 
-var ProviderSummaryAttributes = Knowledge{
-	Attributes: commands.Attributes{
-		Commands:       []string{"provider-summary"},
-		RequireMention: true,
-		Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
-			provider := strings.ToLower(args[1])
+var ProviderSummaryAttributes = Attributes{
+	Commands:       []string{"provider-summary"},
+	RequireMention: true,
+	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+		provider := strings.ToLower(args[1])
 
-			if _, exists := providers[provider]; !exists {
-				return nil, fmt.Errorf("%s is not a supported provider", provider)
-			}
+		if _, exists := providers[provider]; !exists {
+			return nil, fmt.Errorf("%s is not a supported provider", provider)
+		}
 
-			summary, err := getFeedSummary(5, provider)
-			if err != nil {
-				return nil, fmt.Errorf("unable to get feed summary: %v", err)
-			}
+		summary, err := getFeedSummary(5, provider)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get feed summary: %v", err)
+		}
 
-			return commands.StringToBlock(summary, false), nil
-		},
-		RequiredArgs: 2,
-		HelpMarkdown: "summarize RSS feeds for various providers: `provider-summary [aws|vsphere|gcp|azure]`",
+		return StringToBlock(summary, false), nil
 	},
-	InvokeLLM: false,
+	RequiredArgs: 2,
+	HelpMarkdown: "summarize RSS feeds for various providers: `provider-summary [aws|vsphere|gcp|azure]`",
 }

@@ -16,10 +16,14 @@ import (
 
 type Callback func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error)
 
+type MessageOfInterest func(args []string, attribute Attributes) bool
+
 // Attributes define when and how to handle a message
 type Attributes struct {
 	// Commands when matched, the Callback is invoked.
 	Commands []string
+	// MessageOfInterest supercedes Commands. If MessageOfInterest is set, Commands is ignored.  This is useful for more complex matching.
+	MessageOfInterest MessageOfInterest
 	// The number of arguments a command must have. var args are not supported.
 	RequiredArgs int
 	// Callback function called when the attributes are met
@@ -36,6 +40,8 @@ type Attributes struct {
 	MustBeInThread bool
 	// AllowNonSplatUsers by default, only members of @splat-team can interact with the bot
 	AllowNonSplatUsers bool
+	// This command will not be included in the help message.
+	ExcludeFromHelp bool
 }
 
 var (
@@ -43,20 +49,27 @@ var (
 	allowedUsers = map[string]bool{}
 )
 
-// AddCommand adds a handler to the list of handlers
-func AddCommand(attribute Attributes) {
+// AddCommand adds a handler to the list of handlers. Matching of the message can be overriden
+// by providing a MessageOfInterest function.
+func AddCommand(attribute Attributes, handler ...MessageOfInterest) {
 	log.Printf("adding command: %v", attribute.Commands)
+	if len(handler) > 0 {
+		attribute.MessageOfInterest = handler[0]
+	} else {
+		attribute.MessageOfInterest = checkForCommand
+	}
 	attributes = append(attributes, attribute)
 }
 
 func Initialize(client *socketmode.Client) error {
-	attributes = append(attributes, CreateSummaryAttributes)
-	attributes = append(attributes, CreateAttributes)
-	attributes = append(attributes, SummarizeAttributes)
-	attributes = append(attributes, HelpAttributes)
-	attributes = append(attributes, UnsizedAttributes)
-	attributes = append(attributes, ProwAttributes)
-	attributes = append(attributes, ProwGraphAttributes)
+	AddCommand(CreateSummaryAttributes)
+	AddCommand(CreateAttributes)
+	AddCommand(SummarizeAttributes)
+	AddCommand(HelpAttributes)
+	AddCommand(UnsizedAttributes)
+	AddCommand(ProwAttributes)
+	AddCommand(ProwGraphAttributes)
+	AddCommand(ProviderSummaryAttributes)
 
 	allowed := os.Getenv("SLACK_ALLOWED_USERS")
 	if len(allowed) == 0 {
