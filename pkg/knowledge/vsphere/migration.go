@@ -10,8 +10,8 @@ var MigrationTopicAttributes = data.Knowledge{
 	Attributes: data.Attributes{
 		MessageOfInterest: func(args []string, attribute data.Attributes) bool {
 			argMap := util.NormalizeTokens(args)
-			if knowledge.TokensPresentOR(argMap, "migration", "vmotion") &&
-				knowledge.TokensPresentOR(argMap, "vsphere", "vmware") {
+			if knowledge.TokensPresentOR(argMap, "migration", "vmotion", "migrate") &&
+				knowledge.TokensPresentOR(argMap, "vsphere", "vmware", "vcenter") {
 				return true
 			}
 			return false
