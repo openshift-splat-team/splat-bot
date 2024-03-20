@@ -3,11 +3,6 @@ on:
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 
-permissions:
-  contents: read
-  # Optional: allow read access to pull request. Use with `only-new-issues` option.
-  # pull-requests: read
-
 jobs:
   test:
     name: lint
