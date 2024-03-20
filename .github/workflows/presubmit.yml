@@ -1,7 +1,7 @@
 name: golangci-lint
 on:
   pull_request:
-    types: [synchronize]
+    types: [opened, labeled, unlabeled, synchronize]
 
 permissions:
   contents: read
