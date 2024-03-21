@@ -138,7 +138,8 @@ func loadKnowledgeEntries(dir string) error {
 		var asset data.KnowledgeAsset
 		err = yaml.Unmarshal([]byte(knowledgeModel), &asset)
 		if err != nil {
-			return fmt.Errorf("error unmarshalling file %s: %v", filePath, err)
+			log.Printf("error unmarshalling file %s: %v", filePath, err)
+			continue
 		}
 		// if the name of a known platform appears in the path add platform specific terms
 		// to 'On' which must be met before the knowledge asset is considered a match
