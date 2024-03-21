@@ -1,7 +1,5 @@
 FROM golang:1.21
 
-USER root
-
 WORKDIR /usr/src/app
 
 COPY . .
