@@ -1,0 +1,17 @@
+name: UFO OR Test
+markdown: >
+  spacecraft typically falls outside the expertise of this channel.  You might reach out in:
+  - #forum-ufo
+
+  Here are some resources that may help:
+urls:
+  - "<https://en.wikipedia.org/wiki/Unidentified_flying_object|UFOs>"
+on:
+  type: or
+  tokens:
+    - spacecraft
+    - ufo
+shouldnt_match:
+  - "im a generic string that shouldnt match anything"
+should_match:
+  - "did you know how to repair a UFO?"
