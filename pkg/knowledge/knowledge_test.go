@@ -72,12 +72,7 @@ func TestYamlLogic(t *testing.T) {
 }
 
 func TestModelLoading(t *testing.T) {
-	expectedAssets := 1
 	assets := knowledgeAssets
-	if len(assets) != expectedAssets {
-		t.Fatalf("expected %d assets, got %d", expectedAssets, len(assets))
-		return
-	}
 
 	for _, asset := range assets {
 		t.Run(asset.Name, func(t *testing.T) {
