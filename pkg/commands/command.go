@@ -92,6 +92,8 @@ func getDMChannelID(client *socketmode.Client, evt *slackevents.MessageEvent) (s
 }
 
 func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
+	isAppMention := false
+
 	switch evt.Type {
 	case "message":
 	case "event_callback":
@@ -102,6 +104,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 	msg := &slackevents.MessageEvent{}
 	switch ev := evt.InnerEvent.Data.(type) {
 	case *slackevents.AppMentionEvent:
+		isAppMention = true
 		appMentionEvent := evt.InnerEvent.Data.(*slackevents.AppMentionEvent)
 		msg = &slackevents.MessageEvent{
 			Channel:         appMentionEvent.Channel,
@@ -122,7 +125,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 	}
 
 	for _, attribute := range attributes {
-		if attribute.RequireMention && !ContainsBotMention(msg.Text) {
+		if attribute.RequireMention && (!ContainsBotMention(msg.Text) || !isAppMention) {
 			continue
 		}
 
