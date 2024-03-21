@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/openshift-splat-team/splat-bot/data"
@@ -10,22 +11,25 @@ import (
 	"github.com/slack-go/slack/socketmode"
 )
 
-func compileHelp() string {
-	var markdownBuffer strings.Builder
-	markdownBuffer.WriteString("*SPLAT Bot Help*\n")
-	markdownBuffer.WriteString("SPLAT Bot provides automation for the team\n")
-	for _, attribute := range attributes {
+func compileHelp() slack.MsgOption {
+	messageBlocks := []slack.Block{}
+	messageBlocks = append(messageBlocks, slack.NewSectionBlock(
+		slack.NewTextBlockObject("mrkdwn", "*Command* | *Description*", false, false),
+		nil,
+		nil,
+	))
+	for _, attribute := range getAttributes() {
 		if attribute.ExcludeFromHelp {
 			continue
 		}
-		markdownBuffer.WriteString(attribute.HelpMarkdown)
-		if attribute.RequireMention {
-			markdownBuffer.WriteString("*")
-		}
-		markdownBuffer.WriteString("\n")
+		messageBlocks = append(messageBlocks, slack.NewSectionBlock(
+			slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("%s | %s", strings.Join(attribute.Commands, " "), attribute.HelpMarkdown), false, false),
+			nil,
+			nil,
+		))
+
 	}
-	markdownBuffer.WriteString("* - requires mention of @splat-bot")
-	return markdownBuffer.String()
+	return slack.MsgOptionBlocks(messageBlocks...)
 }
 
 var HelpAttributes = data.Attributes{
@@ -33,7 +37,7 @@ var HelpAttributes = data.Attributes{
 	RequireMention: true,
 	Callback: func(ctx context.Context, client *socketmode.Client, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		return []slack.MsgOption{
-			slack.MsgOptionText(compileHelp(), true),
+			compileHelp(),
 		}, nil
 	},
 }

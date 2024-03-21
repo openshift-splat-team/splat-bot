@@ -94,7 +94,6 @@ func GetThreadUrl(event *slackevents.MessageEvent) string {
 
 		return threadURL
 	}
-	log.Println("This is not a threaded message")
 	return ""
 }
 

@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/slack-go/slack"
@@ -16,6 +17,7 @@ import (
 )
 
 var (
+	attributeMu  sync.Mutex
 	attributes   = []data.Attributes{}
 	allowedUsers = map[string]bool{}
 )
@@ -23,6 +25,8 @@ var (
 // AddCommand adds a handler to the list of handlers. Matching of the message can be overriden
 // by providing a MessageOfInterest function.
 func AddCommand(attribute data.Attributes, handler ...data.MessageOfInterest) {
+	attributeMu.Lock()
+	defer attributeMu.Unlock()
 	log.Printf("adding command: %v", attribute.Commands)
 	if len(handler) > 0 {
 		attribute.MessageOfInterest = handler[0]
@@ -30,6 +34,16 @@ func AddCommand(attribute data.Attributes, handler ...data.MessageOfInterest) {
 		attribute.MessageOfInterest = checkForCommand
 	}
 	attributes = append(attributes, attribute)
+}
+
+func getAttributes() []data.Attributes {
+	attributeMu.Lock()
+	defer attributeMu.Unlock()
+
+	newAttributes := make([]data.Attributes, len(attributes))
+
+	copy(newAttributes, attributes)
+	return newAttributes
 }
 
 func Initialize(client *socketmode.Client) error {
@@ -92,8 +106,6 @@ func getDMChannelID(client *socketmode.Client, evt *slackevents.MessageEvent) (s
 }
 
 func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
-	isAppMention := false
-
 	switch evt.Type {
 	case "message":
 	case "event_callback":
@@ -104,7 +116,6 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 	msg := &slackevents.MessageEvent{}
 	switch ev := evt.InnerEvent.Data.(type) {
 	case *slackevents.AppMentionEvent:
-		isAppMention = true
 		appMentionEvent := evt.InnerEvent.Data.(*slackevents.AppMentionEvent)
 		msg = &slackevents.MessageEvent{
 			Channel:         appMentionEvent.Channel,
@@ -124,8 +135,8 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 		return nil
 	}
 
-	for _, attribute := range attributes {
-		if attribute.RequireMention && (!ContainsBotMention(msg.Text) || !isAppMention) {
+	for _, attribute := range getAttributes() {
+		if attribute.RequireMention && !ContainsBotMention(msg.Text) {
 			continue
 		}
 
@@ -137,7 +148,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 		}
 
 		args := tokenize(msg.Text, !attribute.DontGlobQuotes)
-		if attribute.RequireMention {
+		if ContainsBotMention(msg.Text) {
 			args = args[1:]
 		}
 
@@ -159,10 +170,11 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 			} else {
 				response, err = attribute.Callback(ctx, client, msg, args)
 				if err != nil {
-					fmt.Printf("failed processing message: %v", err)
+					log.Printf("failed processing message: %v", err)
 				}
 			}
 			if len(response) > 0 {
+				log.Printf("responding to message: %v", response)
 				if attribute.RespondInDM {
 					channelID, err := getDMChannelID(client, msg)
 					if err != nil {
@@ -180,6 +192,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 				}
 				return nil
 			}
+			log.Printf("next\n")
 		}
 	}
 
