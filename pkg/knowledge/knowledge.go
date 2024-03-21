@@ -53,16 +53,20 @@ func isTokenMatch(match data.TokenMatch, tokens map[string]string) bool {
 	}
 
 	if tokensMatch && len(match.Terms) > 0 {
-		tokensMatch = true
+		satisfied := 0
 		for _, term := range match.Terms {
 			tokenMatch := isTokenMatch(term, tokens)
-			if or && tokenMatch {
-				tokensMatch = true
-				break
-			} else if !or && !tokenMatch {
-				tokensMatch = false
-				break
+			if tokenMatch {
+				satisfied++
+				if or {
+					break
+				}
 			}
+		}
+		if or {
+			tokensMatch = satisfied > 0
+		} else {
+			tokensMatch = satisfied == len(match.Terms)
 		}
 	}
 
