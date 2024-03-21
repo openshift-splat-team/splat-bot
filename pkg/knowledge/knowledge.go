@@ -154,7 +154,7 @@ func loadKnowledgeEntries(dir string) error {
 func init() {
 	promptPath := os.Getenv("PROMPT_PATH")
 	if promptPath == "" {
-		promptPath = "/knowledge_prompts"
+		promptPath = "/usr/src/app/knowledge_prompts"
 	}
 	err := loadKnowledgeEntries(promptPath)
 	if err != nil {
