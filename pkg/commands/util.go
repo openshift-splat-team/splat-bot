@@ -37,6 +37,37 @@ func StringsToBlockUnfurl(messages []string, useMarkdown, unfurlLinks bool) []sl
 	}
 }
 
+func StringsToBlockWithURLs(messages []string, urls []string) []slack.MsgOption {
+	messageBlocks := []slack.Block{}
+
+	for _, message := range messages {
+		messageBlocks = append(messageBlocks,
+			slack.NewSectionBlock(
+				slack.NewTextBlockObject("mrkdwn", message, false, false),
+				nil,
+				nil,
+			),
+		)
+	}
+
+	if len(urls) > 0 {
+		messageBlocks = append(messageBlocks, slack.NewDividerBlock())
+		messageBlocks = append(messageBlocks, slack.NewSectionBlock(slack.NewTextBlockObject("mrkdwn", "*Relevant links:*", false, false), nil, nil))
+	}
+	for _, url := range urls {
+		messageBlocks = append(messageBlocks,
+			slack.NewSectionBlock(
+				slack.NewTextBlockObject("mrkdwn", url, false, false),
+				nil,
+				nil,
+			),
+		)
+	}
+	return []slack.MsgOption{
+		slack.MsgOptionBlocks(messageBlocks...),
+	}
+}
+
 func StringToBlockUnfurl(message string, useMarkdown, unfurlLinks bool) []slack.MsgOption {
 	options := []slack.MsgOption{
 		slack.MsgOptionText(message, useMarkdown),

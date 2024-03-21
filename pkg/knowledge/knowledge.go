@@ -3,6 +3,7 @@ package knowledge
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,7 +19,9 @@ import (
 )
 
 const (
-	DEFAULT_URL_PROMPT = `This may be a topic that I can help with. %s`
+	DEFAULT_URL_PROMPT = `This may be a topic that I can help with.
+
+%s`
 	DEFAULT_LLM_PROMPT = `Can you provide a short response that attempts to answer this question: `
 )
 
@@ -88,10 +91,14 @@ func defaultKnowledgeHandler(ctx context.Context, args []string) ([]slack.MsgOpt
 		//if match.InvokeLLM {}
 
 		responseText := fmt.Sprintf(DEFAULT_URL_PROMPT, match.MarkdownPrompt)
+
 		if len(match.URLS) > 0 {
-			responseText = fmt.Sprintf("%s\n%s", responseText, strings.Join(match.URLS, "\n"))
+			//response = append(response, slack.MsgOptionText(strings.Join(match.URLS, "\n"), false))
+			response = append(response, commands.StringsToBlockWithURLs([]string{responseText}, match.URLS)...)
+		} else {
+			response = append(response, slack.MsgOptionText(responseText, true))
 		}
-		response = append(response, slack.MsgOptionText(responseText, false))
+
 	}
 	return response, nil
 }
@@ -123,6 +130,7 @@ func loadKnowledgeEntries(dir string) error {
 	}
 
 	for _, filePath := range files {
+		log.Printf("loading knowledge entry from %s", filePath)
 		knowledgeModel, err := os.ReadFile(filePath)
 		if err != nil {
 			return fmt.Errorf("error reading file %s: %v", filePath, err)
@@ -152,14 +160,12 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("error loading knowledge entries: %v", err))
 	}
-	for _, entry := range knowledgeEntries {
-		entry.Callback = defaultKnowledgeEventHandler
-		entry.DontGlobQuotes = true
-		commands.AddCommand(entry.Attributes)
-	}
+	commands.AddCommand(KnowledgeCommandAttributes)
 }
 
 var KnowledgeCommandAttributes = data.Attributes{
+	Callback:       defaultKnowledgeEventHandler,
+	DontGlobQuotes: true,
 	MessageOfInterest: func(args []string, attribute data.Attributes) bool {
 		for _, enrty := range knowledgeEntries {
 			if enrty.MessageOfInterest(args, attribute) {
