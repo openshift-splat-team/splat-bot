@@ -56,19 +56,24 @@ func Initialize(client *socketmode.Client) error {
 	AddCommand(ProwGraphAttributes)
 	AddCommand(ProviderSummaryAttributes)
 
+	// TODO:  Global allowed users means we cannot make some actions available to some users while others not.  This could
+	//        be beefed up in the future to be allowed users per command from config provided by a yaml file or something of
+	//        that nature.
 	allowed := os.Getenv("SLACK_ALLOWED_USERS")
 	if len(allowed) == 0 {
-		log.Printf("no allowed users specified with SLACK_ALLOWED_USERS. some commands may not work.")
-	}
-	allowedUsersIDs := strings.Split(allowed, ",")
-	for _, user := range allowedUsersIDs {
-		allowedUsers[user] = true
+		log.Printf("Disabling user enforcement.  Please configure SLACK_ALLOWED_USERS if you wish to enforce allowed users on certain commands.")
+	} else {
+		allowedUsersIDs := strings.Split(allowed, ",")
+		for _, user := range allowedUsersIDs {
+			allowedUsers[user] = true
+		}
 	}
 	return nil
 }
 
 func isAllowedUser(evt *slackevents.MessageEvent) error {
-	if _, found := allowedUsers[evt.User]; !found {
+	fmt.Printf("User size: %d\n", len(allowedUsers))
+	if _, found := allowedUsers[evt.User]; !found && len(allowedUsers) > 0 {
 		return errors.New("user not allowed")
 	}
 	return nil
@@ -106,6 +111,8 @@ func getDMChannelID(client *socketmode.Client, evt *slackevents.MessageEvent) (s
 }
 
 func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
+	isAppMention := false
+
 	switch evt.Type {
 	case "message":
 	case "event_callback":
@@ -116,6 +123,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 	msg := &slackevents.MessageEvent{}
 	switch ev := evt.InnerEvent.Data.(type) {
 	case *slackevents.AppMentionEvent:
+		isAppMention = true
 		appMentionEvent := evt.InnerEvent.Data.(*slackevents.AppMentionEvent)
 		msg = &slackevents.MessageEvent{
 			Channel:         appMentionEvent.Channel,
@@ -136,15 +144,9 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 	}
 
 	for _, attribute := range getAttributes() {
-		if attribute.RequireMention && !ContainsBotMention(msg.Text) {
+		fmt.Printf("Checking command: %v\n", attribute.Commands)
+		if attribute.RequireMention && (!ContainsBotMention(msg.Text) || !isAppMention) {
 			continue
-		}
-
-		if !attribute.AllowNonSplatUsers {
-			err := isAllowedUser(msg)
-			if err != nil {
-				return fmt.Errorf("user not allowed: %v", err)
-			}
 		}
 
 		args := tokenize(msg.Text, !attribute.DontGlobQuotes)
@@ -153,6 +155,15 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 		}
 
 		if checkForCommand(args, attribute) {
+			fmt.Printf("Found command: %v\n", attribute.Commands)
+			// Now that we found command, make sure it can be used by current user.
+			if !attribute.AllowNonSplatUsers {
+				err := isAllowedUser(msg)
+				if err != nil {
+					return fmt.Errorf("user not allowed: %v", err)
+				}
+			}
+
 			var response []slack.MsgOption
 			var err error
 			inThread := len(GetThreadUrl(msg)) > 0

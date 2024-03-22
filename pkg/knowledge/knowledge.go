@@ -162,8 +162,12 @@ func init() {
 		promptPath = "/usr/src/app/knowledge_prompts"
 	}
 	err := loadKnowledgeEntries(promptPath)
+	// TODO: Need way for local developers to be able to still start application if they are not testing knowledge stuff.
+	//       For now, we will disable the commands tha require this.
 	if err != nil {
-		panic(fmt.Sprintf("error loading knowledge entries: %v", err))
+		fmt.Printf("error loading knowledge entries: %v", err)
+		fmt.Println("Skipping adding of knowledge-based actions.")
+		return
 	}
 	commands.AddCommand(KnowledgeCommandAttributes)
 }
