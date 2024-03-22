@@ -114,7 +114,7 @@ func getDMChannelID(client *socketmode.Client, evt *slackevents.MessageEvent) (s
 }
 
 func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
-	isAppMention := false
+	isAppMentionEvent := false
 
 	switch evt.Type {
 	case "message":
@@ -126,7 +126,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 	msg := &slackevents.MessageEvent{}
 	switch ev := evt.InnerEvent.Data.(type) {
 	case *slackevents.AppMentionEvent:
-		isAppMention = true
+		isAppMentionEvent = true
 		appMentionEvent := evt.InnerEvent.Data.(*slackevents.AppMentionEvent)
 		msg = &slackevents.MessageEvent{
 			Channel:         appMentionEvent.Channel,
@@ -148,8 +148,21 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 
 	for _, attribute := range getAttributes() {
 		log.Printf("Checking command: %v", attribute.Commands)
-		if attribute.RequireMention && (!ContainsBotMention(msg.Text) || !isAppMention) {
-			continue
+
+		// For app mention logic, there are two scenarios: 1.) Channel Msg.  2.) Direct Message
+		// For Channel messages, we want the event to be an AppMention if attribute.RequireMention.
+		// For Direct messages, we will want event to be Message, Channel = "im", and ContainsBotMention
+		// Note, for AppMessage, InnerEvent is AppMessageEvent, for Message, its MessageEvent.
+		if attribute.RequireMention {
+			if isAppMentionEvent && !ContainsBotMention(msg.Text) {
+				continue
+			} else if !isAppMentionEvent {
+				ieData := evt.InnerEvent.Data.(*slackevents.MessageEvent)
+				channelType := ieData.ChannelType
+				if channelType == slack.TYPE_CHANNEL || (channelType == slack.TYPE_IM && !ContainsBotMention(msg.Text)) {
+					continue
+				}
+			}
 		}
 
 		args := tokenize(msg.Text, !attribute.DontGlobQuotes)
