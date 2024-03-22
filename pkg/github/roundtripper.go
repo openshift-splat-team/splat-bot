@@ -16,10 +16,6 @@ import (
 	"time"
 )
 
-const (
-	githubOrgHeaderKey = "X-PROW-GITHUB-ORG"
-)
-
 var installationPath = regexp.MustCompile(`^/repos/[^/]+/[^/]+/installation$`)
 
 type appGitHubClient interface {

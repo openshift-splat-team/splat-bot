@@ -68,10 +68,16 @@ func main() {
 				if err := json.NewEncoder(buffer).Encode(data); err != nil {
 					fmt.Printf("Error: %v", err)
 				} else {
-					fmt.Printf(buffer.String())
+					fmt.Print(buffer.String())
 				}
 
-				client.PostMessage(data.Channel.ID, slack.MsgOptionDeleteOriginal(data.ResponseURL))
+				// For now, only close if text of action
+				if data.ActionCallback.BlockActions[0].Text.Text == "Close" {
+					_, _, err = client.PostMessage(data.Channel.ID, slack.MsgOptionDeleteOriginal(data.ResponseURL))
+					if err != nil {
+						log.Printf("Error occurred handling interative event: %v", err)
+					}
+				}
 			case socketmode.EventTypeSlashCommand:
 			default:
 				fmt.Fprintf(os.Stderr, "Unexpected event type received: %s\n", evt.Type)
