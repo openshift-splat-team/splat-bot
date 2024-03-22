@@ -5,11 +5,12 @@ go 1.21
 toolchain go1.21.6
 
 require (
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/openshift-splat-team/jira-bot v0.0.0-20240306184102-ae0ce859cefa
 	github.com/slack-go/slack v0.12.5
 	github.com/tmc/langchaingo v0.1.5
+	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/test-infra v0.0.0-20240308135748-95c0bf9c1a77
 )
 
@@ -24,6 +25,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cjwagner/httpcache v0.0.0-20230907212505-d4841bbad466 // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1 // indirect
 	github.com/dlclark/regexp2 v1.8.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
@@ -108,8 +110,6 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.25.9 // indirect
 	k8s.io/apimachinery v0.26.5 // indirect
 	k8s.io/client-go v0.25.9 // indirect
