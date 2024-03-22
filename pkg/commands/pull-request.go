@@ -31,7 +31,6 @@ const (
 )
 
 var (
-	prList   []prstatus.PullRequest
 	githubID string
 
 	boldStyle = slack.RichTextSectionTextStyle{Bold: true}
@@ -41,14 +40,13 @@ var PullRequestAttributes = data.Attributes{
 	Commands:       []string{"pull-requests"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
-		var err error
-		prList, err = fetchPullRequests(args)
+		prList, err := fetchPullRequests(args)
 
 		if err != nil {
 			return nil, fmt.Errorf("user not allowed: %v", err)
 		}
 
-		return generateOutput()
+		return generateOutput(args, prList)
 	},
 	AllowNonSplatUsers:  true,
 	RequiredArgs:        2,
@@ -87,65 +85,73 @@ func init() {
 	AddCommand(PullRequestAttributes)
 }
 
-func generateOutput() ([]slack.MsgOption, error) {
+func generateOutput(args []string, prList []prstatus.PullRequest) ([]slack.MsgOption, error) {
 
 	var messageBlocks []slack.Block
 	truncated := false
 	log.Printf("Attempting to creating %v PR entries.", len(prList))
 	//var prResultsBuffer strings.Builder
-	for index, pr := range prList {
-		if len(messageBlocks)+3+3 > 50 {
-			log.Printf("Due to number of blocks, stopping at index: %d", index)
-			truncated = true
-			break
-		}
-		// Generate divider after first PR
-		if index > 0 {
-			divider := slack.NewDividerBlock()
-			messageBlocks = append(messageBlocks, divider)
-		}
-
-		// Master block for as much text as possible.
-		prBlock := slack.NewRichTextBlock("")
-
-		// Generate Header (title)
-		createFieldWithValue(prBlock, "Title: ", string(pr.Title), true)
-
-		// Generate Project
-		createFieldWithValue(prBlock, "Project: ", string(pr.Repository.Name), false)
-
-		// Generate Labels
-		prLabelsText := slack.NewRichTextSectionTextElement("Labels: ", &boldStyle)
-		prLabelsSection := slack.NewRichTextSection(prLabelsText)
-		prBlock.Elements = append(prBlock.Elements, prLabelsSection)
-
-		if len(pr.Labels.Nodes) > 0 {
-			var prLabelBullets []slack.RichTextElement
-			for _, label := range pr.Labels.Nodes {
-				prLabelListEntry := slack.NewRichTextSectionTextElement(string(label.Label.Name), nil)
-				prLabelListSection := slack.NewRichTextSection(prLabelListEntry)
-				prLabelBullets = append(prLabelBullets, prLabelListSection)
+	if len(prList) == 0 {
+		// This means no Pull Requests were found.  Create generic message to put above close section.
+		notFoundLabel := slack.NewRichTextSectionTextElement(fmt.Sprintf("No pull requests were found for user %v", args[1]), nil)
+		notFoundSection := slack.NewRichTextSection(notFoundLabel)
+		notFoundBlock := slack.NewRichTextBlock("", notFoundSection)
+		messageBlocks = append(messageBlocks, notFoundBlock)
+	} else {
+		for index, pr := range prList {
+			if len(messageBlocks)+3+3 > 50 {
+				log.Printf("Due to number of blocks, stopping at index: %d", index)
+				truncated = true
+				break
 			}
-			prLabelsList := slack.NewRichTextList("bullet", 0, prLabelBullets...)
-			prBlock.Elements = append(prBlock.Elements, prLabelsList)
-		} else {
-			prLabelsNone := slack.NewRichTextSectionTextElement("None", nil)
-			prLabelsSection.Elements = append(prLabelsSection.Elements, prLabelsNone)
+			// Generate divider after first PR
+			if index > 0 {
+				divider := slack.NewDividerBlock()
+				messageBlocks = append(messageBlocks, divider)
+			}
+
+			// Master block for as much text as possible.
+			prBlock := slack.NewRichTextBlock("")
+
+			// Generate Header (title)
+			createFieldWithValue(prBlock, "Title: ", string(pr.Title), true)
+
+			// Generate Project
+			createFieldWithValue(prBlock, "Project: ", string(pr.Repository.Name), false)
+
+			// Generate Labels
+			prLabelsText := slack.NewRichTextSectionTextElement("Labels: ", &boldStyle)
+			prLabelsSection := slack.NewRichTextSection(prLabelsText)
+			prBlock.Elements = append(prBlock.Elements, prLabelsSection)
+
+			if len(pr.Labels.Nodes) > 0 {
+				var prLabelBullets []slack.RichTextElement
+				for _, label := range pr.Labels.Nodes {
+					prLabelListEntry := slack.NewRichTextSectionTextElement(string(label.Label.Name), nil)
+					prLabelListSection := slack.NewRichTextSection(prLabelListEntry)
+					prLabelBullets = append(prLabelBullets, prLabelListSection)
+				}
+				prLabelsList := slack.NewRichTextList("bullet", 0, prLabelBullets...)
+				prBlock.Elements = append(prBlock.Elements, prLabelsList)
+			} else {
+				prLabelsNone := slack.NewRichTextSectionTextElement("None", nil)
+				prLabelsSection.Elements = append(prLabelsSection.Elements, prLabelsNone)
+			}
+
+			// Generate Mergeable info
+			createFieldWithValue(prBlock, "Merge State: ", string(pr.Mergeable), false)
+
+			// Add the PR Block
+			messageBlocks = append(messageBlocks, prBlock)
+
+			// Generate button to open PR
+			openPrText := slack.NewTextBlockObject("plain_text", "View PR", true, false)
+			openPr := slack.NewButtonBlockElement("", "", openPrText)
+			openPr.URL = generatePrURL(pr) //"https://www.google.com"
+			openPr.Style = "primary"
+			openPrActionBlock := slack.NewActionBlock("", openPr)
+			messageBlocks = append(messageBlocks, openPrActionBlock)
 		}
-
-		// Generate Mergeable info
-		createFieldWithValue(prBlock, "Merge State: ", string(pr.Mergeable), false)
-
-		// Add the PR Block
-		messageBlocks = append(messageBlocks, prBlock)
-
-		// Generate button to open PR
-		openPrText := slack.NewTextBlockObject("plain_text", "View PR", true, false)
-		openPr := slack.NewButtonBlockElement("", "", openPrText)
-		openPr.URL = generatePrURL(pr) //"https://www.google.com"
-		openPr.Style = "primary"
-		openPrActionBlock := slack.NewActionBlock("", openPr)
-		messageBlocks = append(messageBlocks, openPrActionBlock)
 	}
 
 	// Add block w/ button to close ephemeral message
