@@ -56,11 +56,16 @@ var PullRequestAttributes = data.Attributes{
 	RespondInChannel:    true,
 }
 
-func init() {
+func getGithubKeyPath() string {
 	keyPath := os.Getenv("GITHUB_KEY_PATH")
 	if keyPath == "" {
 		keyPath = "data/private.key"
 	}
+	return keyPath
+}
+
+func init() {
+	keyPath := getGithubKeyPath()
 	_, err := os.ReadFile(keyPath)
 	if err != nil {
 		log.Printf("error reading file %s: %v", keyPath, err)
@@ -186,7 +191,7 @@ func getGithubToken() (string, error) {
 	githubID = "858938"
 
 	// load from a file
-	keyFile, err := key.FromFile("data/private.key")
+	keyFile, err := key.FromFile(getGithubKeyPath())
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
