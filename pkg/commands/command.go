@@ -11,9 +11,9 @@ import (
 	"sync"
 
 	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
-	"github.com/slack-go/slack/socketmode"
 )
 
 var (
@@ -58,7 +58,7 @@ func init() {
 	AddCommand(CreateJiraWithThreadAttributes)
 }
 
-func Initialize(client *socketmode.Client) error {
+func Initialize() error {
 	// TODO:  Global allowed users means we cannot make some actions available to some users while others not.  This could
 	//        be beefed up in the future to be allowed users per command from config provided by a yaml file or something of
 	//        that nature.
@@ -101,7 +101,7 @@ func tokenize(msgText string, glob bool) []string {
 	}
 }
 
-func getDMChannelID(client *socketmode.Client, evt *slackevents.MessageEvent) (string, error) {
+func getDMChannelID(client util.SlackClientInterface, evt *slackevents.MessageEvent) (string, error) {
 	user := evt.User
 	channel, _, _, err := client.OpenConversation(&slack.OpenConversationParameters{
 		Users: []string{user},
@@ -113,7 +113,7 @@ func getDMChannelID(client *socketmode.Client, evt *slackevents.MessageEvent) (s
 	return channel.Latest.Channel, nil
 }
 
-func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.EventsAPIEvent) error {
+func Handler(ctx context.Context, client util.SlackClientInterface, evt slackevents.EventsAPIEvent) error {
 	isAppMentionEvent := false
 
 	switch evt.Type {
@@ -232,7 +232,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 					_, _, err = client.PostMessage(msg.Channel, response...)
 				}
 				if err != nil {
-					fmt.Printf("failed responding to message: %v", err)
+					return fmt.Errorf("failed responding to message: %v", err)
 				}
 				return nil
 			}

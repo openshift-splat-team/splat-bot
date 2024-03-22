@@ -10,7 +10,6 @@ import (
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
-	"github.com/slack-go/slack/socketmode"
 )
 
 type Prompt string
@@ -24,7 +23,7 @@ var SummarizeAttributes = data.Attributes{
 	Commands:       []string{"summary"},
 	RequireMention: true,
 	RespondInDM:    false,
-	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		response, err := handlePrompt(ctx, PROMPT_ISSUE_SUMMARY, client, evt)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get summary: %v", err)
@@ -42,7 +41,7 @@ var SummarizeAttributes = data.Attributes{
 	},
 }
 
-func handlePrompt(ctx context.Context, prompt Prompt, client *socketmode.Client, evt *slackevents.MessageEvent) (string, error) {
+func handlePrompt(ctx context.Context, prompt Prompt, client util.SlackClientInterface, evt *slackevents.MessageEvent) (string, error) {
 	log.Printf("channel %s/%s\n", evt.Channel, evt.TimeStamp)
 	messages, _, _, err := client.GetConversationReplies(&slack.GetConversationRepliesParameters{
 		ChannelID: evt.Channel,

@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
-	"github.com/slack-go/slack/socketmode"
 
 	prowv1 "k8s.io/test-infra/prow/apis/prowjobs/v1"
 )
@@ -36,7 +36,7 @@ var (
 var ProwGraphAttributes = data.Attributes{
 	Commands:       []string{"prow", "graph"},
 	RequireMention: true,
-	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		startProwRetrievalTimers()
 
 		results, err := createProwGraph(args[2])
@@ -60,7 +60,7 @@ var ProwGraphAttributes = data.Attributes{
 var ProwAttributes = data.Attributes{
 	Commands:       []string{"prow", "results"},
 	RequireMention: true,
-	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		startProwRetrievalTimers()
 
 		results, err := queryProwResults(args[2], args[3], prowv1.ProwJobState(args[4]))

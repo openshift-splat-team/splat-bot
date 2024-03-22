@@ -14,7 +14,6 @@ import (
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
-	"github.com/slack-go/slack/socketmode"
 	"gopkg.in/yaml.v2"
 )
 
@@ -73,7 +72,7 @@ func isTokenMatch(match data.TokenMatch, tokens map[string]string) bool {
 	return tokensMatch
 }
 
-func defaultKnowledgeEventHandler(ctx context.Context, client *socketmode.Client, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+func defaultKnowledgeEventHandler(ctx context.Context, client util.SlackClientInterface, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 	return defaultKnowledgeHandler(ctx, args)
 }
 

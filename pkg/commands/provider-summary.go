@@ -11,7 +11,6 @@ import (
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
-	"github.com/slack-go/slack/socketmode"
 )
 
 const (
@@ -72,7 +71,7 @@ func getFeedSummary(lastNDays int, provider string, additionalContext ...string)
 var ProviderSummaryAttributes = data.Attributes{
 	Commands:       []string{"provider-summary"},
 	RequireMention: true,
-	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		provider := strings.ToLower(args[1])
 
 		if _, exists := providers[provider]; !exists {
