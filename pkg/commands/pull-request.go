@@ -90,27 +90,35 @@ func init() {
 func generateOutput() ([]slack.MsgOption, error) {
 
 	var messageBlocks []slack.Block
+	truncated := false
+	log.Printf("Attempting to creating %v PR entries.", len(prList))
 	//var prResultsBuffer strings.Builder
 	for index, pr := range prList {
+		if len(messageBlocks)+3+3 > 50 {
+			log.Printf("Due to number of blocks, stopping at index: %d", index)
+			truncated = true
+			break
+		}
 		// Generate divider after first PR
 		if index > 0 {
 			divider := slack.NewDividerBlock()
 			messageBlocks = append(messageBlocks, divider)
 		}
 
+		// Master block for as much text as possible.
+		prBlock := slack.NewRichTextBlock("")
+
 		// Generate Header (title)
-		messageBlocks = createFieldWithValue(messageBlocks, "Title: ", string(pr.Title), true)
+		createFieldWithValue(prBlock, "Title: ", string(pr.Title), true)
 
 		// Generate Project
-		messageBlocks = createFieldWithValue(messageBlocks, "Project: ", string(pr.Repository.Name), false)
+		createFieldWithValue(prBlock, "Project: ", string(pr.Repository.Name), false)
 
 		// Generate Labels
-		var prLabelsBlockElements []slack.RichTextElement
 		prLabelsText := slack.NewRichTextSectionTextElement("Labels: ", &boldStyle)
 		prLabelsSection := slack.NewRichTextSection(prLabelsText)
-		prLabelsBlockElements = append(prLabelsBlockElements, prLabelsSection)
+		prBlock.Elements = append(prBlock.Elements, prLabelsSection)
 
-		var prLabelsList slack.RichTextElement
 		if len(pr.Labels.Nodes) > 0 {
 			var prLabelBullets []slack.RichTextElement
 			for _, label := range pr.Labels.Nodes {
@@ -118,22 +126,21 @@ func generateOutput() ([]slack.MsgOption, error) {
 				prLabelListSection := slack.NewRichTextSection(prLabelListEntry)
 				prLabelBullets = append(prLabelBullets, prLabelListSection)
 			}
-			prLabelsList = slack.NewRichTextList("bullet", 0, prLabelBullets...)
-			prLabelsBlockElements = append(prLabelsBlockElements, prLabelsList)
+			prLabelsList := slack.NewRichTextList("bullet", 0, prLabelBullets...)
+			prBlock.Elements = append(prBlock.Elements, prLabelsList)
 		} else {
 			prLabelsNone := slack.NewRichTextSectionTextElement("None", nil)
 			prLabelsSection.Elements = append(prLabelsSection.Elements, prLabelsNone)
 		}
 
-		prLabelsBlock := slack.NewRichTextBlock("", prLabelsBlockElements...)
-		messageBlocks = append(messageBlocks, prLabelsBlock)
-
 		// Generate Mergeable info
-		messageBlocks = createFieldWithValue(messageBlocks, "Merge State: ", string(pr.Mergeable), false)
+		createFieldWithValue(prBlock, "Merge State: ", string(pr.Mergeable), false)
+
+		// Add the PR Block
+		messageBlocks = append(messageBlocks, prBlock)
 
 		// Generate button to open PR
 		openPrText := slack.NewTextBlockObject("plain_text", "View PR", true, false)
-		//openPr := slack.NewButtonBlockElement("open-pr", string(pr.Repository.Name), openPrText)
 		openPr := slack.NewButtonBlockElement("", "", openPrText)
 		openPr.URL = generatePrURL(pr) //"https://www.google.com"
 		openPr.Style = "primary"
@@ -145,6 +152,11 @@ func generateOutput() ([]slack.MsgOption, error) {
 	divider := slack.NewDividerBlock()
 	messageBlocks = append(messageBlocks, divider)
 
+	if truncated {
+		// TODO: Need to add output to notify user of truncation
+		log.Print("Detected truncated results.")
+	}
+
 	lineReturn := slack.NewRichTextSectionTextElement("\n", nil)
 	lineReturnSection := slack.NewRichTextSection(lineReturn)
 	messageBlocks = append(messageBlocks, slack.NewRichTextBlock("", lineReturnSection))
@@ -153,6 +165,8 @@ func generateOutput() ([]slack.MsgOption, error) {
 	closeButton := slack.NewButtonBlockElement("", "", closeText)
 	closeActionBlock := slack.NewActionBlock("", closeButton)
 	messageBlocks = append(messageBlocks, closeActionBlock)
+
+	log.Printf("Number of blocks: %d", len(messageBlocks))
 
 	buffer := bytes.NewBuffer([]byte{})
 	msg := slack.Msg{
@@ -169,20 +183,17 @@ func generateOutput() ([]slack.MsgOption, error) {
 	}, nil
 }
 
-func createFieldWithValue(blocks []slack.Block, fieldText, fieldValue string, addLineReturn bool) []slack.Block {
+func createFieldWithValue(block *slack.RichTextBlock, fieldText, fieldValue string, addLineReturn bool) {
 	fieldLabel := slack.NewRichTextSectionTextElement(fieldText, &boldStyle)
 	fieldTextElement := slack.NewRichTextSectionTextElement(fieldValue, nil)
 	fieldSection := slack.NewRichTextSection(fieldLabel, fieldTextElement)
+	block.Elements = append(block.Elements, fieldSection)
 
-	var field *slack.RichTextBlock
 	if addLineReturn {
 		lineReturn := slack.NewRichTextSectionTextElement("\n", nil)
 		lineReturnSection := slack.NewRichTextSection(lineReturn)
-		field = slack.NewRichTextBlock("", fieldSection, lineReturnSection)
-	} else {
-		field = slack.NewRichTextBlock("", fieldSection)
+		block.Elements = append(block.Elements, lineReturnSection)
 	}
-	return append(blocks, field)
 }
 
 type GithubTokenResponse struct {
@@ -240,7 +251,6 @@ func getGithubToken() (string, error) {
 			"alg": "RS256",
 		})
 	tokenString, err := token.SignedString(keyFile)
-	fmt.Printf("TOKEN: %v\n", tokenString)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}

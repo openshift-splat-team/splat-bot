@@ -22,6 +22,12 @@ import (
 	"time"
 )
 
+type key string
+
+const (
+	githubOrgHeaderKey key = "X-PROW-GITHUB-ORG"
+)
+
 // client interacts with the github api. It is reconstructed whenever
 // ForPlugin/ForSubcomment is called to change the Logger and User-Agent
 // header, whereas delegate will stay the same.
@@ -1143,9 +1149,9 @@ func (c *client) readPaginatedResultsWithContext(ctx context.Context, path, acce
 }
 
 // readPaginatedResultsWithValues is an override that allows control over the query string.
-func (c *client) readPaginatedResultsWithValues(path string, values url.Values, accept, org string, newObj func() interface{}, accumulate func(interface{})) error {
+/*func (c *client) readPaginatedResultsWithValues(path string, values url.Values, accept, org string, newObj func() interface{}, accumulate func(interface{})) error {
 	return c.readPaginatedResultsWithValuesWithContext(context.Background(), path, values, accept, org, newObj, accumulate)
-}
+}*/
 
 func (c *client) readPaginatedResultsWithValuesWithContext(ctx context.Context, path string, values url.Values, accept, org string, newObj func() interface{}, accumulate func(interface{})) error {
 	pagedPath := path
