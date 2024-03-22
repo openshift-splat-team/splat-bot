@@ -45,4 +45,12 @@ var CreateSummaryAttributes = data.Attributes{
 	},
 	RequiredArgs: 4,
 	HelpMarkdown: "create a Jira issue with a summary of the thread: `jira create-with-summary [project] [type]`",
+	ShouldMatch: []string{
+		"jira create-with-summary PROJECT bug",
+		"jira create-with-summary PROJECT Todo",
+	},
+	ShouldntMatch: []string{
+		"jira create PROJECT bug",
+		"jira create PROJECT Todo",
+	},
 }

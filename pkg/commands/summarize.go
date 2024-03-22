@@ -33,6 +33,13 @@ var SummarizeAttributes = data.Attributes{
 	},
 	RequiredArgs: 1,
 	HelpMarkdown: "summarize this thread: `summary`",
+	ShouldMatch: []string{
+		"summary",
+	},
+	ShouldntMatch: []string{
+		"jira create-with-summary PROJECT bug",
+		"jira create-with-summary PROJECT Todo",
+	},
 }
 
 func handlePrompt(ctx context.Context, prompt Prompt, client *socketmode.Client, evt *slackevents.MessageEvent) (string, error) {

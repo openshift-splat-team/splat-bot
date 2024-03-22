@@ -40,4 +40,11 @@ var HelpAttributes = data.Attributes{
 			compileHelp(),
 		}, nil
 	},
+	ShouldMatch: []string{
+		"help",
+	},
+	ShouldntMatch: []string{
+		"jira create-with-summary PROJECT bug",
+		"jira create-with-summary PROJECT Todo",
+	},
 }

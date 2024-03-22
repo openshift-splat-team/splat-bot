@@ -33,4 +33,11 @@ var UnsizedAttributes = data.Attributes{
 	},
 	RequiredArgs: 3,
 	HelpMarkdown: "outputs a list of unsized stories for import in to PlanIt Poker: `jira unsized [project]`",
+	ShouldMatch: []string{
+		"jira unsized SPLAT",
+	},
+	ShouldntMatch: []string{
+		"jira create-with-summary PROJECT bug",
+		"jira create-with-summary PROJECT Todo",
+	},
 }

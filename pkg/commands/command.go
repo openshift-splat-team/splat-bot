@@ -46,7 +46,7 @@ func getAttributes() []data.Attributes {
 	return newAttributes
 }
 
-func Initialize(client *socketmode.Client) error {
+func init() {
 	AddCommand(CreateSummaryAttributes)
 	AddCommand(CreateAttributes)
 	AddCommand(SummarizeAttributes)
@@ -55,7 +55,10 @@ func Initialize(client *socketmode.Client) error {
 	AddCommand(ProwAttributes)
 	AddCommand(ProwGraphAttributes)
 	AddCommand(ProviderSummaryAttributes)
+	AddCommand(CreateJiraWithThreadAttributes)
+}
 
+func Initialize(client *socketmode.Client) error {
 	// TODO:  Global allowed users means we cannot make some actions available to some users while others not.  This could
 	//        be beefed up in the future to be allowed users per command from config provided by a yaml file or something of
 	//        that nature.

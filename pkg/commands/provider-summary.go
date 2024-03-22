@@ -89,4 +89,11 @@ var ProviderSummaryAttributes = data.Attributes{
 	},
 	RequiredArgs: 2,
 	HelpMarkdown: "summarize RSS feeds for various providers: `provider-summary [aws|vsphere|gcp|azure]`",
+	ShouldMatch: []string{
+		"provider-summary aws",
+	},
+	ShouldntMatch: []string{
+		"jira create-with-summary PROJECT bug",
+		"jira create-with-summary PROJECT Todo",
+	},
 }
