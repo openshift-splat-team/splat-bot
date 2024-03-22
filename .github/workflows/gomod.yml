@@ -1,24 +1,20 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Go Mod
+name: vendor
 
 on:
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
         go-version: '1.21'
+    - name: verify
+      run: go mod verify
 
-    - name: tidy
-      run: go mod tidy
-
-    - name: vendor
-      run: go mod vendor
