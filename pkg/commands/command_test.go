@@ -18,12 +18,6 @@ type AttributesTestCase struct {
 	attributes data.Attributes
 }
 
-var (
-	defaultEvent = slackevents.EventsAPIEvent{
-		Data: &slackevents.MessageEvent{},
-	}
-)
-
 func buildAppMentionEvent(text, user, channel string, inThread bool) slackevents.EventsAPIEvent {
 	timestamp := time.Now().String()
 	threadedTimestamp := ""
@@ -74,6 +68,39 @@ const (
 	POST_EPHEMERAL      = "failed responding to message: PostEphemeral"
 )
 
+func checkResponse(attribute data.Attributes, err error) error {
+	if attribute.ResponseIsEphemeral {
+		if err.Error() != POST_EPHEMERAL {
+			return fmt.Errorf("expected ephemeral response when mentioning bot")
+		}
+	} else if err.Error() != POST_MESSAGE {
+		return fmt.Errorf("expected response when mentioning bot")
+	}
+	return nil
+}
+
+func checkRequireChannel(tokens []string, client util.SlackClientInterface, attribute data.Attributes) error {
+	ctx := context.TODO()
+	msg := strings.Join(tokens, " ")
+	for _, channel := range attribute.RequireInChannel {
+		if err := Handler(ctx, client, buildEvent(msg, "test", channel, false)); err != nil {
+			err = checkResponse(attribute, err)
+			if err != nil {
+				return err
+			}
+
+		}
+		if err := Handler(ctx, client, buildEvent(msg, "test", "testchannel", true)); err == nil {
+			err = checkResponse(attribute, err)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+
+}
+
 func checkRequireMention(tokens []string, client util.SlackClientInterface, attribute data.Attributes) error {
 	ctx := context.TODO()
 	msg := strings.Join(tokens, " ")
@@ -85,12 +112,9 @@ func checkRequireMention(tokens []string, client util.SlackClientInterface, attr
 	}
 	msg = fmt.Sprintf("<@%s> %s", SPLAT_BOT_USER_ID, msg)
 	if err := Handler(ctx, client, buildAppMentionEvent(msg, "test", "testchannel", false)); err != nil {
-		if attribute.ResponseIsEphemeral {
-			if err.Error() != POST_EPHEMERAL {
-				return fmt.Errorf("expected ephemeral response when mentioning bot")
-			}
-		} else if err.Error() != POST_MESSAGE {
-			return fmt.Errorf("expected response when mentioning bot")
+		err = checkResponse(attribute, err)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -103,7 +127,10 @@ func checkNotRequireMention(tokens []string, client util.SlackClientInterface, a
 		return nil
 	}
 	if err := Handler(ctx, client, buildEvent(msg, "test", "testchannel", false)); err != nil {
-		return fmt.Errorf("expected response: %v", err)
+		err = checkResponse(attribute, err)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -117,6 +144,9 @@ func TestHandler(t *testing.T) {
 			t.Errorf("test failed for %v: %v", attribute.Commands, err)
 		}
 		if err := checkNotRequireMention(attribute.Commands, mockClient, attribute); err != nil {
+			t.Errorf("test failed for %v: %v", attribute.Commands, err)
+		}
+		if err := checkRequireChannel(attribute.Commands, mockClient, attribute); err != nil {
 			t.Errorf("test failed for %v: %v", attribute.Commands, err)
 		}
 	}
