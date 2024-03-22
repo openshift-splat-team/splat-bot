@@ -165,12 +165,24 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 			}
 		}
 
+		if len(attribute.RequireInChannel) > 0 {
+			allowedInChannel := false
+			for _, channel := range attribute.RequireInChannel {
+				if allowedInChannel = channel == msg.Channel; allowedInChannel {
+					break
+				}
+			}
+			if !allowedInChannel {
+				continue
+			}
+		}
+
 		args := tokenize(msg.Text, !attribute.DontGlobQuotes)
 		if ContainsBotMention(msg.Text) {
 			args = args[1:]
 		}
 
-		if checkForCommand(args, attribute) {
+		if checkForCommand(args, attribute, msg.Channel) {
 			log.Printf("Found command: %v", attribute.Commands)
 			// Now that we found command, make sure it can be used by current user.
 			if !attribute.AllowNonSplatUsers {
@@ -231,7 +243,7 @@ func Handler(ctx context.Context, client *socketmode.Client, evt slackevents.Eve
 	return nil
 }
 
-func checkForCommand(args []string, attribute data.Attributes) bool {
+func checkForCommand(args []string, attribute data.Attributes, channel string) bool {
 	match := true
 	for index, command := range attribute.Commands {
 		if command != args[index] {

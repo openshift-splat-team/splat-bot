@@ -175,9 +175,9 @@ func init() {
 var KnowledgeCommandAttributes = data.Attributes{
 	Callback:       defaultKnowledgeEventHandler,
 	DontGlobQuotes: true,
-	MessageOfInterest: func(args []string, attribute data.Attributes) bool {
+	MessageOfInterest: func(args []string, attribute data.Attributes, channel string) bool {
 		for _, enrty := range knowledgeEntries {
-			if enrty.MessageOfInterest(args, attribute) {
+			if enrty.MessageOfInterest(args, attribute, channel) {
 				return true
 			}
 		}

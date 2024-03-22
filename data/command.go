@@ -10,7 +10,7 @@ import (
 
 type Callback func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error)
 
-type MessageOfInterest func(args []string, attribute Attributes) bool
+type MessageOfInterest func(args []string, attribute Attributes, channel string) bool
 
 // Attributes define when and how to handle a message
 type Attributes struct {
@@ -30,6 +30,8 @@ type Attributes struct {
 	HelpMarkdown string
 	// RespondInDM responds in a DM to the user.
 	RespondInDM bool
+	// RequireInChannel the attribute will only be recognized in a given channel(s).
+	RequireInChannel []string
 	// MustBeInThread the attribute will only be recognized in a thread.
 	MustBeInThread bool
 	// AllowNonSplatUsers by default, only members of @splat-team can interact with the bot

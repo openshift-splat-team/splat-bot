@@ -33,13 +33,13 @@ func TestCommands(t *testing.T) {
 				}
 				for _, shouldMatch := range test.attributes.ShouldMatch {
 					tokens := strings.Split(shouldMatch, " ")
-					if !checkForCommand(tokens, test.attributes) {
+					if !checkForCommand(tokens, test.attributes, "testchannel") {
 						t.Errorf("Should have matched %s", shouldMatch)
 					}
 				}
 				for _, shouldntMatch := range test.attributes.ShouldntMatch {
 					tokens := strings.Split(shouldntMatch, " ")
-					if checkForCommand(tokens, test.attributes) {
+					if checkForCommand(tokens, test.attributes, "testchannel") {
 						t.Errorf("Shouldnt have matched %s", shouldntMatch)
 					}
 				}
