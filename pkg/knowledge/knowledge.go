@@ -14,7 +14,6 @@ import (
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
-	"github.com/slack-go/slack/socketmode"
 	"gopkg.in/yaml.v2"
 )
 
@@ -73,7 +72,7 @@ func isTokenMatch(match data.TokenMatch, tokens map[string]string) bool {
 	return tokensMatch
 }
 
-func defaultKnowledgeEventHandler(ctx context.Context, client *socketmode.Client, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+func defaultKnowledgeEventHandler(ctx context.Context, client util.SlackClientInterface, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 	return defaultKnowledgeHandler(ctx, args)
 }
 
@@ -175,9 +174,9 @@ func init() {
 var KnowledgeCommandAttributes = data.Attributes{
 	Callback:       defaultKnowledgeEventHandler,
 	DontGlobQuotes: true,
-	MessageOfInterest: func(args []string, attribute data.Attributes) bool {
+	MessageOfInterest: func(args []string, attribute data.Attributes, channel string) bool {
 		for _, enrty := range knowledgeEntries {
-			if enrty.MessageOfInterest(args, attribute) {
+			if enrty.MessageOfInterest(args, attribute, channel) {
 				return true
 			}
 		}

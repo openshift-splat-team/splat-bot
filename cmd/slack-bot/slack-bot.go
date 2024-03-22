@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/slack-go/slack"
 	"log"
 	"os"
+
+	"github.com/slack-go/slack"
 
 	"github.com/openshift-splat-team/splat-bot/pkg/commands"
 	_ "github.com/openshift-splat-team/splat-bot/pkg/knowledge"
@@ -27,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = commands.Initialize(client)
+	err = commands.Initialize()
 	if err != nil {
 		fmt.Printf("unable to get users in group")
 		os.Exit(1)

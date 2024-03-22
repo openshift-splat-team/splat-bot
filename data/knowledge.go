@@ -37,6 +37,9 @@ type KnowledgeAsset struct {
 
 	// ShouldntMatch is a list of strings that shouldnt match
 	ShouldntMatch []string `yaml:"shouldnt_match"`
+
+	// RequireInChannel the attribute will only be recognized in a given channel(s).
+	RequireInChannel []string
 }
 
 type TokenMatch struct {

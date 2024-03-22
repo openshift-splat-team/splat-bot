@@ -6,15 +6,15 @@ import (
 
 	"github.com/openshift-splat-team/jira-bot/cmd/issue"
 	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
-	"github.com/slack-go/slack/socketmode"
 )
 
 var CreateJiraWithThreadAttributes = data.Attributes{
 	Commands:       []string{"jira", "create-with-thread"},
 	RequireMention: true,
-	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := GetThreadUrl(evt)
 		description := ""
 		if len(url) > 0 {

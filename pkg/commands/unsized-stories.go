@@ -7,15 +7,15 @@ import (
 
 	"github.com/openshift-splat-team/jira-bot/pkg/util"
 	"github.com/openshift-splat-team/splat-bot/data"
+	sbutils "github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
-	"github.com/slack-go/slack/socketmode"
 )
 
 var UnsizedAttributes = data.Attributes{
 	Commands:       []string{"jira", "unsized"},
 	RequireMention: true,
-	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client sbutils.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		issues, err := util.GetUnsizedStories()
 		if err != nil {
 			return WrapErrorToBlock(err, "error querying issues"), nil

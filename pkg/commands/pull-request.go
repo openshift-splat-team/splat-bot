@@ -15,11 +15,11 @@ import (
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
-	"github.com/slack-go/slack/socketmode"
 	"k8s.io/test-infra/prow/github"
 	"k8s.io/test-infra/prow/prstatus"
 
 	splathub "github.com/openshift-splat-team/splat-bot/pkg/github"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 
 	"github.com/beatlabs/github-auth/app"
 	"github.com/beatlabs/github-auth/key"
@@ -39,7 +39,7 @@ var (
 var PullRequestAttributes = data.Attributes{
 	Commands:       []string{"pull-requests"},
 	RequireMention: true,
-	Callback: func(ctx context.Context, client *socketmode.Client, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		prList, err := fetchPullRequests(args)
 
 		if err != nil {
