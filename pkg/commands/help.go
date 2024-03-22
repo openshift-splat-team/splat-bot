@@ -40,6 +40,8 @@ var HelpAttributes = data.Attributes{
 			compileHelp(),
 		}, nil
 	},
+	ResponseIsEphemeral: true,
+	RespondInChannel:    true,
 	ShouldMatch: []string{
 		"help",
 	},
