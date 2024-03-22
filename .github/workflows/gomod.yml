@@ -17,4 +17,3 @@ jobs:
         go-version: '1.21'
     - name: verify
       run: go mod verify
-
