@@ -48,6 +48,13 @@ var ProwGraphAttributes = data.Attributes{
 	},
 	RequiredArgs: 3,
 	HelpMarkdown: "retrieve prow results: `prow graph [platform]`",
+	ShouldMatch: []string{
+		"prow graph vsphere",
+	},
+	ShouldntMatch: []string{
+		"jira create-with-summary PROJECT bug",
+		"jira create-with-summary PROJECT Todo",
+	},
 }
 
 var ProwAttributes = data.Attributes{
@@ -65,6 +72,13 @@ var ProwAttributes = data.Attributes{
 	},
 	RequiredArgs: 5,
 	HelpMarkdown: "retrieve prow results: `prow results [platform] [version] [state]`",
+	ShouldMatch: []string{
+		"prow results vsphere 4.16 success",
+	},
+	ShouldntMatch: []string{
+		"jira create-with-summary PROJECT bug",
+		"jira create-with-summary PROJECT Todo",
+	},
 }
 
 func fetchProwJobs() (*prowv1.ProwJobList, error) {

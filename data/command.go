@@ -42,4 +42,8 @@ type Attributes struct {
 	RespondInChannel bool
 	// ResponseIsEphemeral specifies if the response should be ephemeral.
 	ResponseIsEphemeral bool
+	// ShouldMatch is a list of strings that should match
+	ShouldMatch []string `yaml:"should_match"`
+	// ShouldntMatch is a list of strings that shouldnt match
+	ShouldntMatch []string `yaml:"shouldnt_match"`
 }

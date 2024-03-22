@@ -5,6 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/slack-go/slack"
@@ -12,11 +18,6 @@ import (
 	"github.com/slack-go/slack/socketmode"
 	"k8s.io/test-infra/prow/github"
 	"k8s.io/test-infra/prow/prstatus"
-	"log"
-	"net/http"
-	"os"
-	"strings"
-	"time"
 
 	splathub "github.com/openshift-splat-team/splat-bot/pkg/github"
 
@@ -54,6 +55,13 @@ var PullRequestAttributes = data.Attributes{
 	HelpMarkdown:        "retrieve list of pull requests open for the specified user: `pull-requests [user]`",
 	ResponseIsEphemeral: true,
 	RespondInChannel:    true,
+	ShouldMatch: []string{
+		"pull-requests rvanderp3",
+	},
+	ShouldntMatch: []string{
+		"jira create-with-summary PROJECT bug",
+		"jira create-with-summary PROJECT Todo",
+	},
 }
 
 func getGithubKeyPath() string {

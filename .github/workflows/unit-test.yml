@@ -14,4 +14,4 @@ jobs:
           go-version: '1.21'
           cache: false
       - name: Test with the Go CLI
-        run: "PROMPT_PATH=$(pwd)/pkg/knowledge/test/knowledge_prompts go test ./..."
+        run: "./hack/unit.sh"
