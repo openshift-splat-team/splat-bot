@@ -1,4 +1,4 @@
-name: unit-test
+name: test
 on:
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
