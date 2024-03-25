@@ -11,24 +11,17 @@ import (
 )
 
 func compileHelp() slack.MsgOption {
-	messageBlocks := []slack.Block{}
+	helpText := strings.Builder{}
 	for _, attribute := range getAttributes() {
 		if attribute.ExcludeFromHelp {
 			continue
 		}
-		messageBlocks = append(messageBlocks,
-			slack.NewSectionBlock(
-				slack.NewTextBlockObject("plain_text", strings.Join(attribute.Commands, " "), false, false),
-				[]*slack.TextBlockObject{
-					//slack.NewTextBlockObject("mrkdwn", strings.Join(attribute.Commands, " "), false, false),
-					slack.NewTextBlockObject("plain_text", attribute.HelpMarkdown, false, false),
-				},
-				nil,
-			),
-			slack.NewDividerBlock(),
-		)
+		helpText.WriteString("- ")
+		helpText.WriteString(attribute.HelpMarkdown)
+		helpText.WriteString("\n")
 	}
-	return slack.MsgOptionBlocks(messageBlocks...)
+
+	return StringsToBlockUnfurl([]string{helpText.String()}, false, false)[0]
 }
 
 var HelpAttributes = data.Attributes{
