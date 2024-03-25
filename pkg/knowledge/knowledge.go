@@ -73,14 +73,17 @@ func isTokenMatch(match data.TokenMatch, tokens map[string]string) bool {
 }
 
 func defaultKnowledgeEventHandler(ctx context.Context, client util.SlackClientInterface, eventsAPIEvent *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
-	return defaultKnowledgeHandler(ctx, args)
+	return defaultKnowledgeHandler(ctx, args, eventsAPIEvent)
 }
 
-func defaultKnowledgeHandler(ctx context.Context, args []string) ([]slack.MsgOption, error) {
+func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent *slackevents.MessageEvent) ([]slack.MsgOption, error) {
 	matches := []data.KnowledgeAsset{}
 	normalizedArgs := util.NormalizeTokens(args)
 
 	for _, entry := range knowledgeAssets {
+		if !entry.WatchThreads && eventsAPIEvent.ThreadTimeStamp != "" {
+			continue
+		}
 		if isTokenMatch(entry.On, normalizedArgs) {
 			matches = append(matches, entry)
 		}

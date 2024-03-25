@@ -1,9 +1,13 @@
 package knowledge
 
 import (
+	"context"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/slack-go/slack/slackevents"
 	"gopkg.in/yaml.v3"
 )
 
@@ -72,6 +76,7 @@ func TestYamlLogic(t *testing.T) {
 }
 
 func TestModelLoading(t *testing.T) {
+	ctx := context.TODO()
 	assets := knowledgeAssets
 
 	for _, asset := range assets {
@@ -88,6 +93,19 @@ func TestModelLoading(t *testing.T) {
 				if !IsStringMatch(asset, should) {
 					t.Fatalf("expected to match: %s", should)
 					return
+				}
+				if !asset.WatchThreads {
+					response, err := defaultKnowledgeHandler(ctx, strings.Split(should, " "), &slackevents.MessageEvent{
+						ThreadTimeStamp: time.Now().String(),
+					})
+					if err != nil {
+						t.Fatalf("expected no error, got: %v", err)
+						return
+					}
+					if len(response) > 0 {
+						t.Fatalf("expected no response when not watching threads")
+						return
+					}
 				}
 			}
 			for _, shouldnt := range asset.ShouldntMatch {
