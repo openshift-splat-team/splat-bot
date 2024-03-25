@@ -32,6 +32,15 @@ type KnowledgeAsset struct {
 	// When the prompt is matched
 	On TokenMatch `yaml:"on"`
 
+	// WatchThreads when true, the bot will apply this knowledge in a thread.
+	// By default, the bot only watches channel level messages to see if it can
+	// help.  This is intended to prevent the bot from posting multiple-times in a thread.
+	// Additionally, Knowledge responses are only intended to provide an initial
+	// touchpoint for a user to get more information.  If the user needs more
+	// information, they can ask for it or we'll eventually check the channel.
+	// This is a way to prevent the bot from being overly verbose aand spamming a thread.
+	WatchThreads bool `yaml:"respond_in_threads"`
+
 	// ShouldMatch is a list of strings that should match
 	ShouldMatch []string `yaml:"should_match"`
 
