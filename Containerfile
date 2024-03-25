@@ -1,10 +1,10 @@
 FROM golang:1.21
 
 WORKDIR /usr/src/app
-
+RUN cat /etc/os-release
+RUN apt update
+RUN apt install libpcre3 libpcre3-dev -y
 COPY . .
-RUN go mod tidy && go mod vendor
-
 RUN ./hack/build.sh
 
 CMD ["./slack-bot" , "--slack-token-path", "/creds/token", "--slack-signing-secret-path", "/creds/secret"]
