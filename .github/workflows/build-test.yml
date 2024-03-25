@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 jobs:
-  container:
+  image:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -12,5 +12,11 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.21'
-    - name: build
-      run: ./hack/build.sh
+    - name: image
+      uses: redhat-actions/buildah-build@v2
+      id: build-image
+      with:
+        image: splat-bot
+        tags: latest ${{ github.sha }}
+        containerfiles: |
+          ./Containerfile      
