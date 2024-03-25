@@ -226,6 +226,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 					response = append(response, slack.MsgOptionTS(msg.ThreadTimeStamp))
 				}
 
+				log.Printf("responding to message in channel: %s", msg.Channel)
 				if attribute.ResponseIsEphemeral {
 					_, err = client.PostEphemeral(msg.Channel, msg.User, response...)
 				} else {
