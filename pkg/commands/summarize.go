@@ -51,6 +51,8 @@ func handlePrompt(ctx context.Context, prompt Prompt, client util.SlackClientInt
 		return "", fmt.Errorf("failed to get thread messages: %s", err)
 	}
 
+	messages = util.AnonymizeMessages(messages)
+
 	buffer := strings.Builder{}
 	buffer.WriteString(string(prompt))
 	buffer.WriteString("\n")
