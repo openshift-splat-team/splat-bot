@@ -22,53 +22,104 @@ const (
 
 %s`
 	DEFAULT_LLM_PROMPT = `Can you provide a short response that attempts to answer this question: `
+	DEBUG_CONDITION_MATCHING = false
 )
 
 var (
 	knowledgeAssets  = []data.KnowledgeAsset{}
 	knowledgeEntries = []data.Knowledge{}
+	channelIDMap	 = map[string]string{}
+	slackClient 	util.SlackClientInterface
 )
 
-func IsMatch(asset data.KnowledgeAsset, tokens []string) bool {
+func getCachedClient() (util.SlackClientInterface, error){
+	if slackClient == nil {
+		 return util.GetClient()
+	}
+	return slackClient, nil
+}
 
+func IsMatch(asset data.KnowledgeAsset, tokens []string) bool {
+	if DEBUG_CONDITION_MATCHING {
+		log.Printf("+++++++++++++++++++++++++++++++++++++++IsMatch")
+		log.Printf("checking if message: %s is relevant to %s", strings.Join(tokens, " "), asset.Name)
+	
+		defer func() {
+			log.Printf("---------------------------------------IsMatch")
+		}()
+	}
 	return isTokenMatch(asset.On, util.NormalizeTokens(tokens))
 }
 
 func IsStringMatch(asset data.KnowledgeAsset, str string) bool {
+	if DEBUG_CONDITION_MATCHING {
+		log.Printf("+++++++++++++++++++++++++++++++++++++++IsStringMatch")
+		defer func() {
+			log.Printf("---------------------------------------IsStringMatch")
+		}()
+		
+		log.Printf("checking if message: %s is relevant to %s", str, asset.Name)
+	}
 	tokens := strings.Split(str, " ")
-	return isTokenMatch(asset.On, util.NormalizeTokens(tokens))
+	return IsMatch(asset, tokens)
 }
 
+var depth = 0
+
 func isTokenMatch(match data.TokenMatch, tokens map[string]string) bool {
+	var padding string
+	if DEBUG_CONDITION_MATCHING {
+		depth++
+		padding := strings.Repeat("  ", depth)
+		log.Printf("%s+isTokenMatch", padding)
+	}
 	tokensMatch := true
 	or := match.Type == "or"
 
 	if len(match.Tokens) > 0 {
 		if or {
 			tokensMatch = util.TokensPresentOR(tokens, match.Tokens...)
+			if DEBUG_CONDITION_MATCHING {
+				log.Printf("%sdo any tokens match? %v", padding, tokensMatch)
+			}
 		} else {
 			tokensMatch = util.TokensPresentAND(tokens, match.Tokens...)
+			if DEBUG_CONDITION_MATCHING {
+				log.Printf("%sdo all tokens match? %v", padding, tokensMatch)
+			}
 		}
 	}
 
+	if DEBUG_CONDITION_MATCHING {
+		log.Printf("%stokensMatch: %t; number of match terms: %d", padding, tokensMatch, len(match.Terms))
+	}
 	if tokensMatch && len(match.Terms) > 0 {
 		satisfied := 0
 		for _, term := range match.Terms {
 			tokenMatch := isTokenMatch(term, tokens)
 			if tokenMatch {
 				satisfied++
+				if DEBUG_CONDITION_MATCHING {
+					log.Printf("%s+term satisfied: %d", padding, satisfied)
+				}
 				if or {
+					if DEBUG_CONDITION_MATCHING {
+						log.Printf("%s+or term satisfied", padding)
+					}
+					satisfied = len(match.Terms)
 					break
 				}
 			}
 		}
-		if or {
-			tokensMatch = satisfied > 0
-		} else {
-			tokensMatch = satisfied == len(match.Terms)
+		tokensMatch = satisfied == len(match.Terms)
+		if DEBUG_CONDITION_MATCHING {
+			log.Printf("%sall terms satisfied? %v", padding, tokensMatch)
 		}
 	}
-
+	if DEBUG_CONDITION_MATCHING {
+		log.Printf("%s-tokensMatch: %t", padding, tokensMatch)
+		depth--
+	}
 	return tokensMatch
 }
 
@@ -76,15 +127,73 @@ func defaultKnowledgeEventHandler(ctx context.Context, client util.SlackClientIn
 	return defaultKnowledgeHandler(ctx, args, eventsAPIEvent)
 }
 
-func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent *slackevents.MessageEvent) ([]slack.MsgOption, error) {
-	matches := []data.KnowledgeAsset{}
-	normalizedArgs := util.NormalizeTokens(args)
+func getChannelName(channelID string) (string, error) {
+	slackClient, err := getCachedClient()
+	if err != nil {
+		return "", fmt.Errorf("unable to get client: %v", err)
+	}
+	if name, ok := channelIDMap[channelID]; ok {
+		return name, nil
+	}
+	
+	channel, err := slackClient.GetConversationInfo(
+		&slack.GetConversationInfoInput{
+			ChannelID: channelID,
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("error getting channel info: %v", err)
+	}
+	channelIDMap[channelID] = channel.Name
+	return channel.Name, nil
+}
+
+func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent *slackevents.MessageEvent) ([]slack.MsgOption, error) {	
+	var channel string
+	var err error
+	matches := []data.KnowledgeAsset{}	
 
 	for _, entry := range knowledgeAssets {
 		if !entry.WatchThreads && eventsAPIEvent.ThreadTimeStamp != "" {
 			continue
 		}
-		if isTokenMatch(entry.On, normalizedArgs) {
+		if entry.ChannelContext != nil {		
+			if channel == "" {
+				channel, err = getChannelName(eventsAPIEvent.Channel)
+				if err != nil {
+					return nil, fmt.Errorf("error getting channel name: %v", err)
+				}
+			}
+			channelContext := entry.ChannelContext
+			for _, allowedChannel := range channelContext.Channels {
+				if channel == allowedChannel {					
+					terms := platforms.GetPathContextTerms(channelContext.ContextPath)
+					for _, term := range terms {
+						args = append(args, term.Tokens...)
+					}					
+					break
+				}				
+			}			
+		}
+		if len(entry.RequireInChannel) > 0 {
+			if channel == "" {
+				channel, err = getChannelName(eventsAPIEvent.Channel)
+				if err != nil {
+					return nil, fmt.Errorf("error getting channel name: %v", err)
+				}
+			}
+			allowed := false
+			for _, requiredChannel := range entry.RequireInChannel {
+				if channel == requiredChannel {
+					allowed = true
+					break
+				}
+			}
+			if !allowed {
+				continue
+			}
+		}		
+		if isTokenMatch(entry.On, util.NormalizeTokens(args)) {
 			matches = append(matches, entry)
 		}
 	}
@@ -159,7 +268,7 @@ func loadKnowledgeEntries(dir string) error {
 }
 
 func init() {
-	promptPath := os.Getenv("PROMPT_PATH")
+	promptPath := os.Getenv("PROMPT_PATH")	
 	if promptPath == "" {
 		promptPath = "/usr/src/app/knowledge_prompts"
 	}

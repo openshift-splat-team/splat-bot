@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack/slackevents"
 	"gopkg.in/yaml.v3"
 )
@@ -78,9 +79,10 @@ func TestYamlLogic(t *testing.T) {
 func TestModelLoading(t *testing.T) {
 	ctx := context.TODO()
 	assets := knowledgeAssets
-
+	slackClient = &util.StubInterface{}
 	for _, asset := range assets {
 		t.Run(asset.Name, func(t *testing.T) {
+			channelName := "test"
 			if len(asset.ShouldMatch) == 0 {
 				t.Fatalf("unable to test knowledge prompt: expected at least one should_match")
 				return
@@ -89,10 +91,21 @@ func TestModelLoading(t *testing.T) {
 				t.Fatalf("unable to test knowledge prompt: expected at least one shouldnt_match")
 				return
 			}
+
+			if asset.ChannelContext != nil {
+				if len(asset.ChannelContext.Channels) > 0 {
+					channelName = asset.ChannelContext.Channels[0]
+				}
+			}
 			for _, should := range asset.ShouldMatch {
-				if !IsStringMatch(asset, should) {
-					t.Fatalf("expected to match: %s", should)
-					return
+				msgEvent := &slackevents.MessageEvent{
+					Text: 		  should,
+					Channel: 	channelName,
+				}
+				responses, err := defaultKnowledgeHandler(ctx, strings.Split(should, " "), msgEvent)
+				 if err != nil || len(responses) == 0 {					
+				 	t.Fatalf("expected to match: %s", should)
+				 	return
 				}
 				if !asset.WatchThreads {
 					response, err := defaultKnowledgeHandler(ctx, strings.Split(should, " "), &slackevents.MessageEvent{
@@ -106,13 +119,18 @@ func TestModelLoading(t *testing.T) {
 						t.Fatalf("expected no response when not watching threads")
 						return
 					}
-				}
+				}				
 			}
 			for _, shouldnt := range asset.ShouldntMatch {
-				if IsStringMatch(asset, shouldnt) {
-					t.Fatalf("expected not to match: %s", shouldnt)
-					return
+				msgEvent := &slackevents.MessageEvent{
+					Text:      shouldnt,
+					Channel: 	"random",
 				}
+				_, err := defaultKnowledgeHandler(ctx, strings.Split(shouldnt, " "), msgEvent)
+				 if err != nil {
+					t.Fatalf("expected not to match: %s", shouldnt)
+				 	return
+				}				
 			}
 		})
 	}

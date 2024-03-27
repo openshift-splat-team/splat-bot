@@ -1,11 +1,16 @@
-name: UFO OR Test
+name: Channel context test
 markdown: >
-  spacecraft typically falls outside the expertise of this channel.  You might reach out in:
+  spacecraft typically falls outside the expertise of this channel.
+  You might reach out in:
   - #forum-ufo
 
   Here are some resources that may help:
 urls:
   - "<https://en.wikipedia.org/wiki/Unidentified_flying_object|UFOs>"
+channel_context:
+  channels:
+    - vmware
+  context_path: "vmware"
 on:
   type: or
   tokens:
