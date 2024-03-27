@@ -41,6 +41,10 @@ type KnowledgeAsset struct {
 	// This is a way to prevent the bot from being overly verbose aand spamming a thread.
 	WatchThreads bool `yaml:"respond_in_threads"`
 
+	// channels messages arriving on these channels will automatically have platform tokens 
+	// satisfied.
+	ChannelContext *ChannelContext `yaml:"channel_context"`
+	
 	// ShouldMatch is a list of strings that should match
 	ShouldMatch []string `yaml:"should_match"`
 
@@ -48,7 +52,15 @@ type KnowledgeAsset struct {
 	ShouldntMatch []string `yaml:"shouldnt_match"`
 
 	// RequireInChannel the attribute will only be recognized in a given channel(s).
-	RequireInChannel []string
+	RequireInChannel []string `yaml:"must_be_in_channels"`
+}
+
+type ChannelContext struct {
+	// contextPath is the path context to satisfy
+	ContextPath string `yaml:"context_path"`
+
+	// channels messages arriving on these channels will automatically have platform tokens
+	Channels []string `yaml:"channels"`
 }
 
 type TokenMatch struct {
