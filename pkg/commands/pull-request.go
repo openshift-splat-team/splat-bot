@@ -27,7 +27,8 @@ import (
 )
 
 const (
-	githubAppId = "858938"
+	githubAppId        = "858938"
+	JSON_DEBUG_ENABLED = false // TODO: make configurable in future
 )
 
 var (
@@ -205,10 +206,13 @@ func generateOutput(args []string, prList []prstatus.PullRequest) ([]slack.MsgOp
 	msg := slack.Msg{
 		Blocks: slack.Blocks{BlockSet: messageBlocks},
 	}
-	if err := json.NewEncoder(buffer).Encode(msg); err != nil {
-		log.Printf("Error: %v", err)
-	} else {
-		log.Print(buffer.String())
+
+	if JSON_DEBUG_ENABLED {
+		if err := json.NewEncoder(buffer).Encode(msg); err != nil {
+			log.Printf("Error: %v", err)
+		} else {
+			log.Print(buffer.String())
+		}
 	}
 
 	return []slack.MsgOption{
@@ -261,21 +265,12 @@ func getGithubToken() (string, error) {
 	client := githubApp.Client()
 
 	// The client can be used to send authenticated requests
-	resp, err := client.Get("https://api.github.com/app")
+	_, err = client.Get("https://api.github.com/app")
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
-	fmt.Printf("Response: %v\n", resp)
-
-	install, err := githubApp.InstallationConfig("48639702")
-	if err != nil {
-		fmt.Printf("Unable to get install app id: %v\n", err)
-	} else {
-		fmt.Printf("Got install app %v\n", install)
-	}
 
 	// Generate JWT
-	fmt.Printf("Time: %v\n", time.Now().String())
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256,
 		jwt.MapClaims{
 			"iss": githubID,
@@ -294,7 +289,6 @@ func getGithubToken() (string, error) {
 
 	// Get Access Token
 	var request *http.Request
-	fmt.Printf("%v %v\n", "Bearer", tokenString)
 	request, err = http.NewRequest("POST", "https://api.github.com/app/installations/48639702/access_tokens", bytes.NewBuffer(nil))
 	if err != nil {
 		return "", err
@@ -304,7 +298,7 @@ func getGithubToken() (string, error) {
 	request.Header.Add("X-GitHub-Api-Version", "2022-11-28")
 
 	httpClient := &http.Client{}
-	resp, err = httpClient.Do(request)
+	resp, err := httpClient.Do(request)
 	if err != nil {
 		return "", err
 	}
@@ -364,7 +358,7 @@ func QueryPullRequests(ctx context.Context, ghc GithubQuerier, query string) ([]
 		vars["searchCursor"] = githubql.NewString(sq.Search.PageInfo.EndCursor)
 	}
 	// TODO: da.log.Infof("Search for query \"%s\" cost %d point(s). %d remaining.", query, totalCost, remaining)
-	fmt.Printf("Search for query \"%s\" cost %d point(s). %d remaining.\n", query, totalCost, remaining)
+	log.Printf("Search for query \"%s\" cost %d point(s). %d remaining.", query, totalCost, remaining)
 	return prs, nil
 }
 
