@@ -62,6 +62,32 @@ var PullRequestAttributes = data.Attributes{
 	},
 }
 
+var PullRequestAssignedAttributes = data.Attributes{
+	Commands:       []string{"pull-requests-assigned"},
+	RequireMention: true,
+	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
+		prList, err := fetchPullRequests(args)
+
+		if err != nil {
+			return nil, fmt.Errorf("user not allowed: %v", err)
+		}
+
+		return generateOutput(args, prList)
+	},
+	AllowNonSplatUsers:  true,
+	RequiredArgs:        2,
+	HelpMarkdown:        "retrieve list of pull requests opened that are assigned to the specified user: `pull-requests-assigned [user]`",
+	ResponseIsEphemeral: true,
+	RespondInChannel:    true,
+	ShouldMatch: []string{
+		"pull-requests-assigned rvanderp3",
+	},
+	ShouldntMatch: []string{
+		"jira create-with-summary PROJECT bug",
+		"jira create-with-summary PROJECT Todo",
+	},
+}
+
 func getGithubKeyPath() string {
 	keyPath := os.Getenv("GITHUB_KEY_PATH")
 	if keyPath == "" {
@@ -83,6 +109,7 @@ func init() {
 		return
 	}
 	AddCommand(PullRequestAttributes)
+	AddCommand(PullRequestAssignedAttributes)
 }
 
 func generateOutput(args []string, prList []prstatus.PullRequest) ([]slack.MsgOption, error) {
@@ -293,8 +320,14 @@ func getGithubToken() (string, error) {
 	return gitToken, nil
 }
 
-func ConstructSearchQuery(login string) string {
-	tokens := []string{"is:pr", "state:open", "author:" + login}
+func ConstructSearchQuery(args []string) string {
+	var tokens []string
+	login := args[1]
+	if args[0] == "pull-requests-assigned" {
+		tokens = []string{"is:pr", "state:open", "assignee:" + login}
+	} else {
+		tokens = []string{"is:pr", "state:open", "author:" + login}
+	}
 	return strings.Join(tokens, " ")
 }
 
@@ -361,7 +394,7 @@ func fetchPullRequests(args []string) ([]prstatus.PullRequest, error) {
 		fmt.Printf("Error creating github client: %v\n", err)
 		return nil, err
 	}
-	query := ConstructSearchQuery(args[1])
+	query := ConstructSearchQuery(args)
 	prList, err = QueryPullRequests(context.TODO(), githubClient, query)
 	if err != nil {
 		fmt.Printf("Failed to get PRs: %v\n", err)
