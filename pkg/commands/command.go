@@ -141,7 +141,8 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 		return fmt.Errorf("received an unknown event type: %T", ev)
 	}
 
-	if len(msg.BotID) > 0 {
+	if len(msg.BotID) > 0 && IsSPLATBotID(msg.BotID) {
+		log.Printf("throwing away message from bot: %s", msg.BotID)
 		// throw away bot messages
 		return nil
 	}

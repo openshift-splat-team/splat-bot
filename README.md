@@ -3,6 +3,14 @@
 Basic responder for common questions and problems in the channels that SPLAT helps moderate.
 
 ## Building
+
+1. Ensure dependencies are installed
+
+~~~
+sudo dnf install pcre pcre-devel
+~~~
+
+2. Build
 ~~~
 ./hack/build.sh
 ~~~
