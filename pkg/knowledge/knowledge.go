@@ -21,20 +21,20 @@ const (
 	DEFAULT_URL_PROMPT = `This may be a topic that I can help with.
 
 %s`
-	DEFAULT_LLM_PROMPT = `Can you provide a short response that attempts to answer this question: `
+	DEFAULT_LLM_PROMPT       = `Can you provide a short response that attempts to answer this question: `
 	DEBUG_CONDITION_MATCHING = false
 )
 
 var (
 	knowledgeAssets  = []data.KnowledgeAsset{}
 	knowledgeEntries = []data.Knowledge{}
-	channelIDMap	 = map[string]string{}
-	slackClient 	util.SlackClientInterface
+	channelIDMap     = map[string]string{}
+	slackClient      util.SlackClientInterface
 )
 
-func getCachedClient() (util.SlackClientInterface, error){
+func getCachedClient() (util.SlackClientInterface, error) {
 	if slackClient == nil {
-		 return util.GetClient()
+		return util.GetClient()
 	}
 	return slackClient, nil
 }
@@ -43,7 +43,7 @@ func IsMatch(asset data.KnowledgeAsset, tokens []string) bool {
 	if DEBUG_CONDITION_MATCHING {
 		log.Printf("+++++++++++++++++++++++++++++++++++++++IsMatch")
 		log.Printf("checking if message: %s is relevant to %s", strings.Join(tokens, " "), asset.Name)
-	
+
 		defer func() {
 			log.Printf("---------------------------------------IsMatch")
 		}()
@@ -57,7 +57,7 @@ func IsStringMatch(asset data.KnowledgeAsset, str string) bool {
 		defer func() {
 			log.Printf("---------------------------------------IsStringMatch")
 		}()
-		
+
 		log.Printf("checking if message: %s is relevant to %s", str, asset.Name)
 	}
 	tokens := strings.Split(str, " ")
@@ -135,7 +135,7 @@ func getChannelName(channelID string) (string, error) {
 	if name, ok := channelIDMap[channelID]; ok {
 		return name, nil
 	}
-	
+
 	channel, err := slackClient.GetConversationInfo(
 		&slack.GetConversationInfoInput{
 			ChannelID: channelID,
@@ -148,16 +148,16 @@ func getChannelName(channelID string) (string, error) {
 	return channel.Name, nil
 }
 
-func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent *slackevents.MessageEvent) ([]slack.MsgOption, error) {	
+func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent *slackevents.MessageEvent) ([]slack.MsgOption, error) {
 	var channel string
 	var err error
-	matches := []data.KnowledgeAsset{}	
+	matches := []data.KnowledgeAsset{}
 
 	for _, entry := range knowledgeAssets {
 		if !entry.WatchThreads && eventsAPIEvent.ThreadTimeStamp != "" {
 			continue
 		}
-		if entry.ChannelContext != nil {		
+		if entry.ChannelContext != nil {
 			if channel == "" {
 				channel, err = getChannelName(eventsAPIEvent.Channel)
 				if err != nil {
@@ -166,14 +166,14 @@ func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent 
 			}
 			channelContext := entry.ChannelContext
 			for _, allowedChannel := range channelContext.Channels {
-				if channel == allowedChannel {					
+				if channel == allowedChannel {
 					terms := platforms.GetPathContextTerms(channelContext.ContextPath)
 					for _, term := range terms {
 						args = append(args, term.Tokens...)
-					}					
+					}
 					break
-				}				
-			}			
+				}
+			}
 		}
 		if len(entry.RequireInChannel) > 0 {
 			if channel == "" {
@@ -192,7 +192,7 @@ func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent 
 			if !allowed {
 				continue
 			}
-		}		
+		}
 		if isTokenMatch(entry.On, util.NormalizeTokens(args)) {
 			matches = append(matches, entry)
 		}
@@ -268,7 +268,7 @@ func loadKnowledgeEntries(dir string) error {
 }
 
 func init() {
-	promptPath := os.Getenv("PROMPT_PATH")	
+	promptPath := os.Getenv("PROMPT_PATH")
 	if promptPath == "" {
 		promptPath = "/usr/src/app/knowledge_prompts"
 	}
@@ -284,8 +284,10 @@ func init() {
 }
 
 var KnowledgeCommandAttributes = data.Attributes{
-	Callback:       defaultKnowledgeEventHandler,
-	DontGlobQuotes: true,
+	Callback:           defaultKnowledgeEventHandler,
+	DontGlobQuotes:     true,
+	RequireMention:     false,
+	AllowNonSplatUsers: true,
 	MessageOfInterest: func(args []string, attribute data.Attributes, channel string) bool {
 		for _, enrty := range knowledgeEntries {
 			if enrty.MessageOfInterest(args, attribute, channel) {

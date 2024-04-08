@@ -97,6 +97,15 @@ func GetThreadUrl(event *slackevents.MessageEvent) string {
 	return ""
 }
 
+func IsSPLATBotID(botID string) bool {
+	userID, ok := os.LookupEnv("SPLAT_BOT_USER_ID")
+	if !ok {
+		log.Println("no bot user id specified with SPLAT_BOT_USER_ID")
+		return false
+	}
+	return botID == userID
+}
+
 func ContainsBotMention(messageText string) bool {
 	userID, ok := os.LookupEnv("SPLAT_BOT_USER_ID")
 	if !ok {
