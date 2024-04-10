@@ -22,7 +22,7 @@ func GetPlatformTermsAWS() data.TokenMatch {
 
 func GetInstallTerms() data.TokenMatch {
 	return data.TokenMatch{
-		Tokens: []string{"install", "installation", "ipi", "upi"},
+		Tokens: []string{"install", "installation", "ipi", "upi", "install-config"},
 		Type:   "or",
 	}
 }
