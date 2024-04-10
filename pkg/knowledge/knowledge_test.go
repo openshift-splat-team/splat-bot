@@ -54,6 +54,13 @@ var (
 	}
 )
 
+func TestStripPunctuation(t *testing.T) {
+	stripped := util.StripPunctuation("\"\"install-config?\"")
+	if stripped != "install-config" {
+		t.Fatalf("beginning and trailing puncuation are not removed: %s", stripped)
+	}
+}
+
 func TestYamlLogic(t *testing.T) {
 	var asset data.KnowledgeAsset
 	err := yaml.Unmarshal([]byte(simpleLogicYaml), &asset)
@@ -98,17 +105,20 @@ func TestModelLoading(t *testing.T) {
 				}
 			}
 			for _, should := range asset.ShouldMatch {
+				tokens := util.NormalizeTokensToSlice(strings.Split(should, " "))
+
 				msgEvent := &slackevents.MessageEvent{
-					Text: 		  should,
-					Channel: 	channelName,
+					Text:    should,
+					Channel: channelName,
 				}
-				responses, err := defaultKnowledgeHandler(ctx, strings.Split(should, " "), msgEvent)
-				 if err != nil || len(responses) == 0 {					
-				 	t.Fatalf("expected to match: %s", should)
-				 	return
+				responses, err := defaultKnowledgeHandler(ctx, tokens, msgEvent)
+				if err != nil || len(responses) == 0 {
+					dump := DumpMatchTree(asset.On, nil, nil)
+					t.Fatalf("expected to match: %s\nOn: %s", should, strings.Join(dump, "\n"))
+					return
 				}
 				if !asset.WatchThreads {
-					response, err := defaultKnowledgeHandler(ctx, strings.Split(should, " "), &slackevents.MessageEvent{
+					response, err := defaultKnowledgeHandler(ctx, tokens, &slackevents.MessageEvent{
 						ThreadTimeStamp: time.Now().String(),
 					})
 					if err != nil {
@@ -119,18 +129,22 @@ func TestModelLoading(t *testing.T) {
 						t.Fatalf("expected no response when not watching threads")
 						return
 					}
-				}				
+				}
 			}
 			for _, shouldnt := range asset.ShouldntMatch {
+				tokens := util.NormalizeTokensToSlice(strings.Split(shouldnt, " "))
 				msgEvent := &slackevents.MessageEvent{
-					Text:      shouldnt,
-					Channel: 	"random",
+					Text:    shouldnt,
+					Channel: "random",
 				}
-				_, err := defaultKnowledgeHandler(ctx, strings.Split(shouldnt, " "), msgEvent)
-				 if err != nil {
-					t.Fatalf("expected not to match: %s", shouldnt)
-				 	return
-				}				
+				_, err := defaultKnowledgeHandler(ctx, tokens, msgEvent)
+				if err != nil {
+					dump := DumpMatchTree(asset.On, nil, nil)
+					t.Fatalf("On: %s", strings.Join(dump, "\n"))
+					t.Fatalf("expected not to match: %s\nOn: %s", shouldnt, strings.Join(dump, "\n"))
+
+					return
+				}
 			}
 		})
 	}

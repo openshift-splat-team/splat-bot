@@ -14,6 +14,7 @@ import (
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+	"go.uber.org/thriftrw/ptr"
 	"gopkg.in/yaml.v2"
 )
 
@@ -32,6 +33,32 @@ var (
 	slackClient      util.SlackClientInterface
 )
 
+func DumpMatchTree(match data.TokenMatch, depth *int64, messages []string) []string {
+	if depth == nil {
+		depth = ptr.Int64(0)
+	} else {
+		*depth++
+	}
+	if messages == nil {
+		messages = []string{}
+	}
+	padding := strings.Repeat(" ", int(*depth))
+	matchType := "OR"
+	if len(match.Type) > 0 {
+		matchType = match.Type
+	}
+	messages = append(messages, fmt.Sprintf("%s Match: %t; Match Type: %s", padding, match.Satisfied, matchType))
+	messages = append(messages, fmt.Sprintf("%s Immediate Tokens: %s", padding, strings.Join(match.Tokens, ",")))
+	if len(match.Terms) > 0 {
+		messages = append(messages, fmt.Sprintf("%s Number of Descendant Terms(all terms must match in addition to tokens): %d", padding, len(match.Terms)))
+		for _, term := range match.Terms {
+			messages = DumpMatchTree(term, depth, messages)
+		}
+	}
+	*depth--
+	return messages
+}
+
 func getCachedClient() (util.SlackClientInterface, error) {
 	if slackClient == nil {
 		return util.GetClient()
@@ -48,7 +75,7 @@ func IsMatch(asset data.KnowledgeAsset, tokens []string) bool {
 			log.Printf("---------------------------------------IsMatch")
 		}()
 	}
-	return isTokenMatch(asset.On, util.NormalizeTokens(tokens))
+	return isTokenMatch(&asset.On, util.NormalizeTokens(tokens))
 }
 
 func IsStringMatch(asset data.KnowledgeAsset, str string) bool {
@@ -66,7 +93,7 @@ func IsStringMatch(asset data.KnowledgeAsset, str string) bool {
 
 var depth = 0
 
-func isTokenMatch(match data.TokenMatch, tokens map[string]string) bool {
+func isTokenMatch(match *data.TokenMatch, tokens map[string]string) bool {
 	var padding string
 	if DEBUG_CONDITION_MATCHING {
 		depth++
@@ -95,8 +122,8 @@ func isTokenMatch(match data.TokenMatch, tokens map[string]string) bool {
 	}
 	if tokensMatch && len(match.Terms) > 0 {
 		satisfied := 0
-		for _, term := range match.Terms {
-			tokenMatch := isTokenMatch(term, tokens)
+		for idx := range match.Terms {
+			tokenMatch := isTokenMatch(&match.Terms[idx], tokens)
 			if tokenMatch {
 				satisfied++
 				if DEBUG_CONDITION_MATCHING {
@@ -120,6 +147,7 @@ func isTokenMatch(match data.TokenMatch, tokens map[string]string) bool {
 		log.Printf("%s-tokensMatch: %t", padding, tokensMatch)
 		depth--
 	}
+	match.Satisfied = tokensMatch
 	return tokensMatch
 }
 
@@ -153,7 +181,7 @@ func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent 
 	var err error
 	matches := []data.KnowledgeAsset{}
 
-	for _, entry := range knowledgeAssets {
+	for idx, entry := range knowledgeAssets {
 		if !entry.WatchThreads && eventsAPIEvent.ThreadTimeStamp != "" {
 			continue
 		}
@@ -193,7 +221,7 @@ func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent 
 				continue
 			}
 		}
-		if isTokenMatch(entry.On, util.NormalizeTokens(args)) {
+		if isTokenMatch(&knowledgeAssets[idx].On, util.NormalizeTokens(args)) {
 			matches = append(matches, entry)
 		}
 	}
