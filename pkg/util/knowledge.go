@@ -31,6 +31,7 @@ func TokensPresentOR(argMap map[string]string, args ...string) bool {
 }
 
 func StripPunctuation(s string) string {
+	lenOnEntry := len(s)
 	if len(s) < 2 {
 		return s
 	}
@@ -41,6 +42,10 @@ func StripPunctuation(s string) string {
 	lastChar := s[len(s)-1]
 	if unicode.IsPunct(rune(lastChar)) {
 		s = s[:len(s)-1]
+	}
+
+	if lenOnEntry > len(s) {
+		s = StripPunctuation(s)
 	}
 	return s
 }
@@ -54,7 +59,21 @@ func NormalizeTokens(args []string) map[string]string {
 		}
 
 		arg = strings.ToLower(StripPunctuation(arg))
+		arg = strings.TrimSpace(arg)
 		normalized[arg] = arg
+	}
+	return normalized
+}
+
+// NormalizeTokensToSlice convert all tokens to lower case for case insensitive matching
+func NormalizeTokensToSlice(args []string) []string {
+	tokenMap := NormalizeTokens(args)
+	normalized := make([]string, len(tokenMap))
+
+	i := 0
+	for k := range tokenMap {
+		normalized[i] = k
+		i++
 	}
 	return normalized
 }

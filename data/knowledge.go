@@ -41,10 +41,10 @@ type KnowledgeAsset struct {
 	// This is a way to prevent the bot from being overly verbose aand spamming a thread.
 	WatchThreads bool `yaml:"respond_in_threads"`
 
-	// channels messages arriving on these channels will automatically have platform tokens 
+	// channels messages arriving on these channels will automatically have platform tokens
 	// satisfied.
 	ChannelContext *ChannelContext `yaml:"channel_context"`
-	
+
 	// ShouldMatch is a list of strings that should match
 	ShouldMatch []string `yaml:"should_match"`
 
@@ -64,7 +64,8 @@ type ChannelContext struct {
 }
 
 type TokenMatch struct {
-	Type   string       `yaml:"type"`
-	Tokens []string     `yaml:"tokens"`
-	Terms  []TokenMatch `yaml:"terms"`
+	Type      string       `yaml:"type"`
+	Tokens    []string     `yaml:"tokens"`
+	Terms     []TokenMatch `yaml:"terms"`
+	Satisfied bool
 }
