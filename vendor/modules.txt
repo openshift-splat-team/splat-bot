@@ -562,6 +562,9 @@ go.uber.org/atomic
 # go.uber.org/multierr v1.9.0
 ## explicit; go 1.19
 go.uber.org/multierr
+# go.uber.org/thriftrw v1.31.0
+## explicit; go 1.20
+go.uber.org/thriftrw/ptr
 # go.uber.org/zap v1.24.0
 ## explicit; go 1.19
 go.uber.org/zap
