@@ -1,5 +1,7 @@
 package data
 
+import "github.com/expr-lang/expr/vm"
+
 // Knowledge defines a peice of knowledge that the bot can respond with
 type Knowledge struct {
 	Attributes
@@ -64,8 +66,10 @@ type ChannelContext struct {
 }
 
 type TokenMatch struct {
-	Type      string       `yaml:"type"`
-	Tokens    []string     `yaml:"tokens"`
-	Terms     []TokenMatch `yaml:"terms"`
-	Satisfied bool
+	Type         string       `yaml:"type"`
+	Tokens       []string     `yaml:"tokens"`
+	Terms        []TokenMatch `yaml:"terms"`
+	CompiledExpr *vm.Program
+	Expr         string `yaml:"expr"`
+	Satisfied    bool
 }
