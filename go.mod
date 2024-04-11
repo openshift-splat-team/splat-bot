@@ -6,7 +6,9 @@ toolchain go1.21.6
 
 require (
 	github.com/beatlabs/github-auth v0.0.0-20240318193700-b9f9970f423b
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
+	github.com/expr-lang/expr v1.16.4
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/openshift-splat-team/jira-bot v0.0.0-20240306184102-ae0ce859cefa
@@ -48,7 +50,6 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cjwagner/httpcache v0.0.0-20230907212505-d4841bbad466 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.8.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
