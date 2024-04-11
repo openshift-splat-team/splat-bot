@@ -166,6 +166,24 @@ github.com/evanphx/json-patch
 # github.com/evanphx/json-patch/v5 v5.6.0
 ## explicit; go 1.12
 github.com/evanphx/json-patch/v5
+# github.com/expr-lang/expr v1.16.4
+## explicit; go 1.18
+github.com/expr-lang/expr
+github.com/expr-lang/expr/ast
+github.com/expr-lang/expr/builtin
+github.com/expr-lang/expr/checker
+github.com/expr-lang/expr/compiler
+github.com/expr-lang/expr/conf
+github.com/expr-lang/expr/file
+github.com/expr-lang/expr/internal/deref
+github.com/expr-lang/expr/optimizer
+github.com/expr-lang/expr/parser
+github.com/expr-lang/expr/parser/lexer
+github.com/expr-lang/expr/parser/operator
+github.com/expr-lang/expr/parser/utils
+github.com/expr-lang/expr/patcher
+github.com/expr-lang/expr/vm
+github.com/expr-lang/expr/vm/runtime
 # github.com/fatih/structs v1.1.0
 ## explicit
 github.com/fatih/structs

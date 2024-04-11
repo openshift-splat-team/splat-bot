@@ -82,6 +82,7 @@ func isAllowedUser(evt *slackevents.MessageEvent) error {
 	return nil
 }
 func tokenize(msgText string, glob bool) []string {
+	msgText = strings.ReplaceAll(msgText, "\n", " ")
 	var tokens []string
 	if glob {
 		re := regexp.MustCompile(`"([^"]*?)"|(\S+)`)

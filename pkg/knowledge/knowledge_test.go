@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/expr-lang/expr"
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack/slackevents"
@@ -53,6 +54,80 @@ var (
 		},
 	}
 )
+
+func TestExpr(t *testing.T) {
+
+	tokens := map[string]string{
+		"this":        "",
+		"is":          "",
+		"a":           "",
+		"test":        "",
+		"of":          "",
+		"expressions": ""}
+
+	type testCase struct {
+		name          string
+		exprSpec      string
+		desiredResult bool
+	}
+
+	testCases := []testCase{
+		{
+			name:          "contains any of the tokens",
+			exprSpec:      `containsAny(tokens, ["this", "things"])`,
+			desiredResult: true,
+		},
+		{
+			name:          "contains none of the tokens",
+			exprSpec:      `containsAny(tokens, ["air", "plane"])`,
+			desiredResult: false,
+		},
+		{
+			name:          "contains all of the tokens",
+			exprSpec:      `containsAll(tokens, ["this", "is"])`,
+			desiredResult: true,
+		},
+		{
+			name:          "missing some tokens",
+			exprSpec:      `containsAll(tokens, ["this", "plane"])`,
+			desiredResult: false,
+		},
+		{
+			name:          "all and any with mismatching tokens",
+			exprSpec:      `containsAll(tokens, ["this", "plane"]) and containsAny(tokens, ["expressions", "train"])`,
+			desiredResult: false,
+		},
+		{
+			name:          "all and any with matching tokens",
+			exprSpec:      `containsAll(tokens, ["this", "is"]) and containsAny(tokens, ["expressions", "train"])`,
+			desiredResult: true,
+		},
+		{
+			name:          "all or any with some matching tokens",
+			exprSpec:      `containsAll(tokens, ["this", "is"]) or containsAny(tokens, ["tracks", "train"])`,
+			desiredResult: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			program, err := expr.Compile(tc.exprSpec, exprOptions...)
+			if err != nil {
+				t.Fatalf("unable to compile expression: %v", err)
+				return
+			}
+			result, err := expr.Run(program, map[string]interface{}{"tokens": tokens})
+			if err != nil {
+				t.Fatalf("unable to execute expression: %v", err)
+				return
+			}
+			if result.(bool) != tc.desiredResult {
+				t.Fatalf("expected: %t but got %t", tc.desiredResult, result.(bool))
+				return
+			}
+		})
+	}
+}
 
 func TestStripPunctuation(t *testing.T) {
 	stripped := util.StripPunctuation("\"\"install-config?\"")
