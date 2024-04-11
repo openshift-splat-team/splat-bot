@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/expr-lang/expr"
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/commands"
 	"github.com/openshift-splat-team/splat-bot/pkg/knowledge/platforms"
@@ -31,6 +32,7 @@ var (
 	knowledgeEntries = []data.Knowledge{}
 	channelIDMap     = map[string]string{}
 	slackClient      util.SlackClientInterface
+	exprOptions      = []expr.Option{}
 )
 
 func DumpMatchTree(match data.TokenMatch, depth *int64, messages []string) []string {
@@ -95,6 +97,15 @@ var depth = 0
 
 func isTokenMatch(match *data.TokenMatch, tokens map[string]string) bool {
 	var padding string
+	if match.CompiledExpr != nil {
+		log.Printf("checking message against expression: %s", match.Expr)
+		result, err := expr.Run(match.CompiledExpr, map[string]interface{}{"tokens": tokens})
+		if err != nil {
+			log.Printf("unable to run expression on match condition: %v", err)
+			return false
+		}
+		return result.(bool)
+	}
 	if DEBUG_CONDITION_MATCHING {
 		depth++
 		padding := strings.Repeat("  ", depth)
@@ -289,6 +300,18 @@ func loadKnowledgeEntries(dir string) error {
 		if contextTerms := platforms.GetPathContextTerms(filePath); contextTerms != nil {
 			asset.On.Terms = append(asset.On.Terms, contextTerms...)
 		}
+
+		if len(asset.On.Expr) > 0 {
+			platformExpressions := platforms.GetPathContextExpr(filePath)
+			if len(platformExpressions) > 0 {
+				asset.On.Expr = fmt.Sprintf("%s and %s", platformExpressions, asset.On.Expr)
+			}
+			asset.On.CompiledExpr, err = expr.Compile(asset.On.Expr, exprOptions...)
+			if err != nil {
+				return fmt.Errorf("error compiling knowledge expression: %v", err)
+			}
+		}
+
 		knowledgeAssets = append(knowledgeAssets, asset)
 	}
 
@@ -296,6 +319,31 @@ func loadKnowledgeEntries(dir string) error {
 }
 
 func init() {
+	exprOptions = append(exprOptions, expr.Function("containsAny", func(params ...any) (any, error) {
+		tokenMap := params[0].(map[string]string)
+		result := false
+		for _, param := range params[1].([]any) {
+			if _, exists := tokenMap[param.(string)]; exists {
+				result = true
+				break
+			}
+		}
+		log.Printf("containsAny: %v; %v", result, params[1].([]any))
+		return result, nil
+	}))
+	exprOptions = append(exprOptions, expr.Function("containsAll", func(params ...any) (any, error) {
+		tokenMap := params[0].(map[string]string)
+		result := len(params[1].([]any)) > 0
+		for _, param := range params[1].([]any) {
+			if _, exists := tokenMap[param.(string)]; !exists {
+				result = false
+				break
+			}
+		}
+		log.Printf("containsAll: %v; %v", result, params[1].([]any))
+		return result, nil
+	}))
+
 	promptPath := os.Getenv("PROMPT_PATH")
 	if promptPath == "" {
 		promptPath = "/usr/src/app/knowledge_prompts"
