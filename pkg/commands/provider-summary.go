@@ -84,7 +84,7 @@ var ProviderSummaryAttributes = data.Attributes{
 			summary = append(summary, fmt.Sprintf("unavailable: %v", err))
 		}
 
-		return StringsToBlockUnfurl(summary, false, false), nil
+		return util.StringsToBlockUnfurl(summary, false, false), nil
 	},
 	RequiredArgs: 2,
 	HelpMarkdown: "summarize RSS feeds for various providers: `provider-summary [aws|vsphere|gcp|azure]`",

@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/chat"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -148,7 +149,8 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 		return nil
 	}
 
-	messageHandled := false
+	var args []string
+	var response []slack.MsgOption
 	for _, attribute := range getAttributes() {
 		log.Printf("Checking command: %v", attribute.Commands)
 
@@ -180,7 +182,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 			}
 		}
 
-		args := tokenize(msg.Text, !attribute.DontGlobQuotes)
+		args = tokenize(msg.Text, !attribute.DontGlobQuotes)
 		if util.ContainsBotMention(msg.Text) {
 			args = args[1:]
 		}
@@ -195,7 +197,6 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 				}
 			}
 
-			var response []slack.MsgOption
 			var err error
 			inThread := len(util.GetThreadUrl(msg)) > 0
 			if attribute.MustBeInThread && !inThread {
@@ -210,7 +211,6 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 					slack.MsgOptionText(fmt.Sprintf("command requires %d arguments. if an argument is greater than one word, be sure to wrap that argument in quotes.\n%s\n", attribute.RequiredArgs, attribute.HelpMarkdown), true),
 				}
 			} else {
-				messageHandled = true
 				response, err = attribute.Callback(ctx, client, msg, args)
 				if err != nil {
 					log.Printf("failed processing message: %v", err)
@@ -247,11 +247,20 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 
 	// if the message isn't handled, check to see if this is an IM message
 	// and the user is allowed.
-	if !messageHandled {
-		ieData := evt.InnerEvent.Data.(*slackevents.MessageEvent)
+	if len(response) == 0 {
+		ieData := msg
 		channelType := ieData.ChannelType
 		if channelType == slack.TYPE_IM && !util.ContainsBotMention(msg.Text) {
-
+			response, err := chat.HandleChatInteraction(ctx, client, msg)
+			if err != nil {
+				log.Printf("failed processing message: %v", err)
+			}
+			if len(response) > 0 {
+				_, _, err = client.PostMessage(msg.Channel, response...)
+				if err != nil {
+					log.Printf("failed posting message: %v", err)
+				}
+			}
 		}
 	}
 	return nil

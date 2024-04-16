@@ -37,11 +37,11 @@ var CreateSummaryAttributes = data.Attributes{
 
 		issue, err := issue.CreateIssue(args[2], title, description, args[3])
 		if err != nil {
-			return WrapErrorToBlock(err, "error creating issue"), nil
+			return util.WrapErrorToBlock(err, "error creating issue"), nil
 		}
 		issueKey := issue.Key
 		issueURL := fmt.Sprintf("%s/browse/%s", JIRA_BASE_URL, issueKey)
-		return StringToBlock(fmt.Sprintf("issue <%s|%s> created", issueURL, issueKey), false), nil
+		return util.StringToBlock(fmt.Sprintf("issue <%s|%s> created", issueURL, issueKey), false), nil
 	},
 	RequiredArgs: 4,
 	HelpMarkdown: "create a Jira issue with a summary of the thread: `jira create-with-summary [project] [type]`",

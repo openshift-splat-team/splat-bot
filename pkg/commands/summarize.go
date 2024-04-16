@@ -6,6 +6,7 @@ import (
 
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
+	sbutils "github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 )
@@ -24,7 +25,7 @@ var SummarizeAttributes = data.Attributes{
 		if err != nil {
 			return nil, fmt.Errorf("unable to get summary: %v", err)
 		}
-		return StringToBlock(fmt.Sprintf("Sure! Here is a summary of this thread.\n\n*Note: I am a bot and I try my best to provide a reasonable summary. Be sure to check the summary for accuracy.*\n\n%s\n", response), false), nil
+		return sbutils.StringToBlock(fmt.Sprintf("Sure! Here is a summary of this thread.\n\n*Note: I am a bot and I try my best to provide a reasonable summary. Be sure to check the summary for accuracy.*\n\n%s\n", response), false), nil
 	},
 	RequiredArgs: 1,
 	HelpMarkdown: "summarize this thread: `summary`",
