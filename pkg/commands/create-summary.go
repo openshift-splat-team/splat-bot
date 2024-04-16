@@ -15,13 +15,13 @@ var CreateSummaryAttributes = data.Attributes{
 	Commands:       []string{"jira", "create-with-summary"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
-		url := GetThreadUrl(evt)
+		url := util.GetThreadUrl(evt)
 		description := ""
 		if len(url) > 0 {
 			description = fmt.Sprintf("%s\n\ncreated from thread: %s", description, url)
 		}
 		MAX_LEN := 250
-		title, err := handlePrompt(ctx, PROMPT_ISSUE_TITLE, client, evt)
+		title, err := util.HandlePrompt(ctx, PROMPT_ISSUE_TITLE, client, evt)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get title: %v", err)
 		}
@@ -29,7 +29,7 @@ var CreateSummaryAttributes = data.Attributes{
 			title = title[:MAX_LEN]
 		}
 
-		response, err := handlePrompt(ctx, PROMPT_ISSUE_SUMMARY, client, evt)
+		response, err := util.HandlePrompt(ctx, PROMPT_ISSUE_SUMMARY, client, evt)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get summary: %v", err)
 		}

@@ -142,12 +142,13 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 		return fmt.Errorf("received an unknown event type: %T", ev)
 	}
 
-	if len(msg.BotID) > 0 && IsSPLATBotID(msg.BotID) {
+	if len(msg.BotID) > 0 && util.IsSPLATBotID(msg.BotID) {
 		log.Printf("throwing away message from bot: %s", msg.BotID)
 		// throw away bot messages
 		return nil
 	}
 
+	messageHandled := false
 	for _, attribute := range getAttributes() {
 		log.Printf("Checking command: %v", attribute.Commands)
 
@@ -156,12 +157,12 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 		// For Direct messages, we will want event to be Message, Channel = "im", and ContainsBotMention
 		// Note, for AppMessage, InnerEvent is AppMessageEvent, for Message, its MessageEvent.
 		if attribute.RequireMention {
-			if isAppMentionEvent && !ContainsBotMention(msg.Text) {
+			if isAppMentionEvent && !util.ContainsBotMention(msg.Text) {
 				continue
 			} else if !isAppMentionEvent {
 				ieData := evt.InnerEvent.Data.(*slackevents.MessageEvent)
 				channelType := ieData.ChannelType
-				if channelType == slack.TYPE_CHANNEL || (channelType == slack.TYPE_IM && !ContainsBotMention(msg.Text)) {
+				if channelType == slack.TYPE_CHANNEL || (channelType == slack.TYPE_IM && !util.ContainsBotMention(msg.Text)) {
 					continue
 				}
 			}
@@ -180,7 +181,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 		}
 
 		args := tokenize(msg.Text, !attribute.DontGlobQuotes)
-		if ContainsBotMention(msg.Text) {
+		if util.ContainsBotMention(msg.Text) {
 			args = args[1:]
 		}
 
@@ -196,7 +197,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 
 			var response []slack.MsgOption
 			var err error
-			inThread := len(GetThreadUrl(msg)) > 0
+			inThread := len(util.GetThreadUrl(msg)) > 0
 			if attribute.MustBeInThread && !inThread {
 				continue
 			}
@@ -209,6 +210,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 					slack.MsgOptionText(fmt.Sprintf("command requires %d arguments. if an argument is greater than one word, be sure to wrap that argument in quotes.\n%s\n", attribute.RequiredArgs, attribute.HelpMarkdown), true),
 				}
 			} else {
+				messageHandled = true
 				response, err = attribute.Callback(ctx, client, msg, args)
 				if err != nil {
 					log.Printf("failed processing message: %v", err)
@@ -224,7 +226,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 					msg.Channel = channelID
 				} else if !attribute.RespondInChannel {
 					response = append(response, slack.MsgOptionTS(msg.TimeStamp))
-				} else if len(GetThreadUrl(msg)) > 0 {
+				} else if len(util.GetThreadUrl(msg)) > 0 {
 					response = append(response, slack.MsgOptionTS(msg.ThreadTimeStamp))
 				}
 
@@ -243,6 +245,15 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 		}
 	}
 
+	// if the message isn't handled, check to see if this is an IM message
+	// and the user is allowed.
+	if !messageHandled {
+		ieData := evt.InnerEvent.Data.(*slackevents.MessageEvent)
+		channelType := ieData.ChannelType
+		if channelType == slack.TYPE_IM && !util.ContainsBotMention(msg.Text) {
+
+		}
+	}
 	return nil
 }
 

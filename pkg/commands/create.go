@@ -15,7 +15,7 @@ var CreateAttributes = data.Attributes{
 	Commands:       []string{"jira", "create"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
-		url := GetThreadUrl(evt)
+		url := util.GetThreadUrl(evt)
 		description := args[4]
 		if len(url) > 0 {
 			description = fmt.Sprintf("%s\n\ncreated from thread: %s", description, url)
