@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	PROMPT_ISSUE_TITLE   = util.Prompt("can you summarize this thread to a single line? The line should be less than 100 characters. ")
-	PROMPT_ISSUE_SUMMARY = util.Prompt("provide a brief summary of the thread. only reply with information from the thread: ")
+	PROMPT_ISSUE_TITLE   = util.Prompt("you are a helpful bot who reviews data and summarizes that data to open new Jira issues. can you summarize this thread to a single line? The line should be less than 100 characters. exclude any slack metadata.")
+	PROMPT_ISSUE_SUMMARY = util.Prompt("you are a helpful bot who reviews data and summarizes that data to open new Jira issues. provide a brief summary of the thread. exclude any slack metadata.")
 )
 
 var SummarizeAttributes = data.Attributes{
