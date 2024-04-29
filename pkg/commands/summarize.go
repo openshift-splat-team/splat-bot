@@ -19,7 +19,7 @@ var (
 var SummarizeAttributes = data.Attributes{
 	Commands:       []string{"summary"},
 	RequireMention: true,
-	RespondInDM:    false,
+	RespondInDM:    true,
 	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		response, err := util.HandlePrompt(ctx, PROMPT_ISSUE_SUMMARY, client, evt)
 		if err != nil {
