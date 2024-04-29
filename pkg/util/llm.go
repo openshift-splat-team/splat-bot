@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +20,23 @@ import (
 const (
 	PROMPT_RESPONSE_TIMEOUT = time.Second * 120
 )
+
+var (
+	TEMPERATURE float64
+)
+
+func init() {
+	temp := os.Getenv("MODEL_TEMPERATURE")
+	if len(temp) == 0 {
+		TEMPERATURE = 0.7
+	} else {
+		var err error
+		TEMPERATURE, err = strconv.ParseFloat(temp, 64)
+		if err != nil {
+			TEMPERATURE = 0.7
+		}
+	}
+}
 
 type Prompt string
 
@@ -51,7 +69,11 @@ func GenerateResponse(ctx context.Context, prompt string, conversationContext ..
 		},
 	})
 
-	response, err := llm.GenerateContent(timedCtx, conversationContext)
+	log.Printf("calling model with temp: %f\n", TEMPERATURE)
+
+	response, err := llm.GenerateContent(timedCtx, conversationContext, func(co *llms.CallOptions) {
+		co.Temperature = TEMPERATURE
+	})
 	if err != nil {
 		return "", fmt.Errorf("unable to generate response from LLM: %v", err)
 	}

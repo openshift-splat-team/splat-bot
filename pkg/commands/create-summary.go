@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/openshift-splat-team/jira-bot/cmd/issue"
 	"github.com/openshift-splat-team/splat-bot/data"
@@ -22,15 +21,6 @@ var CreateSummaryAttributes = data.Attributes{
 		if len(url) > 0 {
 			description = fmt.Sprintf("%s\n\ncreated from thread: %s", description, url)
 		}
-		MAX_LEN := 250
-		title, err := util.HandlePrompt(ctx, PROMPT_ISSUE_TITLE, client, evt)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get title: %v", err)
-		}
-		if len(title) > MAX_LEN {
-			title = title[:MAX_LEN]
-		}
-		title = strings.ReplaceAll(title, "\n", " ")
 
 		response, err := util.HandlePrompt(ctx, PROMPT_ISSUE_SUMMARY, client, evt)
 		if err != nil {
@@ -38,7 +28,7 @@ var CreateSummaryAttributes = data.Attributes{
 		}
 		description = fmt.Sprintf("thread summary: %s\n%s\nissue created by splat-bot\n", response, description)
 
-		issue, err := issue.CreateIssue(args[2], title, description, args[3])
+		issue, err := issue.CreateIssue(args[2], "follow up on slack thread", description, args[3])
 		if err != nil {
 			return util.WrapErrorToBlock(err, "error creating issue"), nil
 		}
