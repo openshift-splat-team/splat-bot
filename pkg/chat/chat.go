@@ -19,7 +19,7 @@ func HandleChatInteraction(ctx context.Context, client util.SlackClientInterface
 		more := true
 		var nextCursor string
 		var err error
-		msgs := []slack.Message{}
+		var msgs []slack.Message
 		// AddToContext
 		// TO-DO: build context from thread
 		for more {
