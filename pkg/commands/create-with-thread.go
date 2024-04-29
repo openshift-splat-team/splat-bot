@@ -12,9 +12,9 @@ import (
 )
 
 var CreateJiraWithThreadAttributes = data.Attributes{
-	Commands:       []string{"jira", "create-with-thread"},
-	RequireMention: true,
-	RespondInDM:    true,
+	Commands:            []string{"jira", "create-with-thread"},
+	RequireMention:      true,
+	ResponseIsEphemeral: true,
 	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := util.GetThreadUrl(evt)
 		description := ""
