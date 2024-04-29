@@ -18,7 +18,7 @@ var UnsizedAttributes = data.Attributes{
 	Callback: func(ctx context.Context, client sbutils.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		issues, err := util.GetUnsizedStories()
 		if err != nil {
-			return WrapErrorToBlock(err, "error querying issues"), nil
+			return sbutils.WrapErrorToBlock(err, "error querying issues"), nil
 		}
 
 		var builder strings.Builder
@@ -29,7 +29,7 @@ var UnsizedAttributes = data.Attributes{
 			builder.WriteString("no issues found")
 		}
 
-		return StringToBlock(builder.String(), false), nil
+		return sbutils.StringToBlock(builder.String(), false), nil
 	},
 	RequiredArgs: 3,
 	HelpMarkdown: "outputs a list of unsized stories for import in to PlanIt Poker: `jira unsized [project]`",

@@ -248,7 +248,7 @@ func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent 
 
 		if len(match.URLS) > 0 {
 			//response = append(response, slack.MsgOptionText(strings.Join(match.URLS, "\n"), false))
-			response = append(response, commands.StringsToBlockWithURLs([]string{responseText}, match.URLS)...)
+			response = append(response, util.StringsToBlockWithURLs([]string{responseText}, match.URLS)...)
 		} else {
 			response = append(response, slack.MsgOptionText(responseText, true))
 		}

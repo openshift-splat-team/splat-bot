@@ -21,7 +21,7 @@ func compileHelp() slack.MsgOption {
 		helpText.WriteString("\n")
 	}
 
-	return StringsToBlockUnfurl([]string{helpText.String()}, false, false)[0]
+	return util.StringsToBlockUnfurl([]string{helpText.String()}, false, false)[0]
 }
 
 var HelpAttributes = data.Attributes{

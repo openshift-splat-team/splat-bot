@@ -44,7 +44,7 @@ var ProwGraphAttributes = data.Attributes{
 			return nil, err
 		}
 
-		return StringToBlock(results, false), nil
+		return util.StringToBlock(results, false), nil
 	},
 	RequiredArgs: 3,
 	HelpMarkdown: "retrieve prow results: `prow graph [platform]`",
@@ -68,7 +68,7 @@ var ProwAttributes = data.Attributes{
 			return nil, err
 		}
 
-		return StringToBlock(results, false), nil
+		return util.StringToBlock(results, false), nil
 	},
 	RequiredArgs: 5,
 	HelpMarkdown: "retrieve prow results: `prow results [platform] [version] [state]`",
