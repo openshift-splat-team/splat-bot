@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/openshift-splat-team/jira-bot/cmd/issue"
 	"github.com/openshift-splat-team/splat-bot/data"
@@ -14,6 +15,7 @@ import (
 var CreateSummaryAttributes = data.Attributes{
 	Commands:       []string{"jira", "create-with-summary"},
 	RequireMention: true,
+	RespondInDM:    true,
 	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := util.GetThreadUrl(evt)
 		description := ""
@@ -28,6 +30,7 @@ var CreateSummaryAttributes = data.Attributes{
 		if len(title) > MAX_LEN {
 			title = title[:MAX_LEN]
 		}
+		title = strings.ReplaceAll(title, "\n", " ")
 
 		response, err := util.HandlePrompt(ctx, PROMPT_ISSUE_SUMMARY, client, evt)
 		if err != nil {
