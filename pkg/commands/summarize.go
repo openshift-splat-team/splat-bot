@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
@@ -12,9 +13,24 @@ import (
 )
 
 var (
-	PROMPT_ISSUE_TITLE   = util.Prompt("you are a helpful bot who reviews data and summarizes that data to open new Jira issues. can you summarize this thread to a single line? The line should be less than 100 characters. exclude any slack metadata.")
-	PROMPT_ISSUE_SUMMARY = util.Prompt("you are a helpful bot who reviews data and summarizes that data to open new Jira issues. provide a brief summary of the thread. exclude any slack metadata.")
+	PROMPT_ISSUE_TITLE   util.Prompt
+	PROMPT_ISSUE_SUMMARY util.Prompt
 )
+
+func init() {
+	val := os.Getenv("PROMPT_ISSUE_TITLE")
+	if val != "" {
+		PROMPT_ISSUE_TITLE = util.Prompt(val)
+	} else {
+		PROMPT_ISSUE_TITLE = util.Prompt("can you summarize this thread to a single line? The line length should be less than 100 characters. ")
+	}
+	val = os.Getenv("PROMPT_ISSUE_SUMMARY")
+	if val != "" {
+		PROMPT_ISSUE_SUMMARY = util.Prompt(val)
+	} else {
+		PROMPT_ISSUE_SUMMARY = util.Prompt("can you summarize this thread?")
+	}
+}
 
 var SummarizeAttributes = data.Attributes{
 	Commands:            []string{"summary"},
