@@ -250,7 +250,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 	if len(response) == 0 {
 		ieData := msg
 		channelType := ieData.ChannelType
-		if channelType == slack.TYPE_IM && !util.ContainsBotMention(msg.Text) {
+		if channelType == slack.TYPE_IM && !util.ContainsBotMention(msg.Text) && (len(msg.BotID) == 0 || util.IsSPLATBotID(msg.BotID)) {
 			response, err := chat.HandleChatInteraction(ctx, client, msg)
 			if err != nil {
 				log.Printf("failed processing message: %v", err)
