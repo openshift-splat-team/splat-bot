@@ -12,10 +12,11 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/openshift-splat-team/splat-bot/data"
-	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+
+	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 
 	prowv1 "k8s.io/test-infra/prow/apis/prowjobs/v1"
 )

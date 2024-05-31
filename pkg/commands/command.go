@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -10,11 +9,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
+
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/chat"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
-	"github.com/slack-go/slack"
-	"github.com/slack-go/slack/slackevents"
 )
 
 var (
@@ -70,6 +70,7 @@ func Initialize() error {
 		allowedUsersIDs := strings.Split(allowed, ",")
 		for _, user := range allowedUsersIDs {
 			allowedUsers[user] = true
+			log.Printf("user id %s is allowed", user)
 		}
 	}
 	return nil
@@ -78,7 +79,7 @@ func Initialize() error {
 func isAllowedUser(evt *slackevents.MessageEvent) error {
 	fmt.Printf("User size: %d\n", len(allowedUsers))
 	if _, found := allowedUsers[evt.User]; !found && len(allowedUsers) > 0 {
-		return errors.New("user not allowed")
+		return fmt.Errorf("user %s with id %s is not allowed", evt.Username, evt.User)
 	}
 	return nil
 }
