@@ -17,6 +17,7 @@ var AskDocsAttributes = data.Attributes{
 	Commands:            []string{"ask-docs"},
 	RequireMention:      true,
 	ResponseIsEphemeral: false,
+	AllowNonSplatUsers:  true,
 	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := os.Getenv("DOC_QUERY_URL")
 		if url == "" {
