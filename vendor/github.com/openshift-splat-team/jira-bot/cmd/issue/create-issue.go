@@ -42,6 +42,10 @@ func createIssue(options *issueCommandOptions) (*jira.Issue, error) {
 			Description: options.description,
 			Project:     *project,
 			Type:        *issueType,
+			Security: map[string]interface{}{
+				"id":   "11696",
+				"self": "https://issues.redhat.com/rest/api/2/securitylevel/11696",
+			},
 		},
 	})
 	if err != nil {
