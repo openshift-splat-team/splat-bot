@@ -60,7 +60,7 @@ github.com/PuerkitoBio/goquery
 # github.com/andybalholm/cascadia v1.3.2
 ## explicit; go 1.16
 github.com/andybalholm/cascadia
-# github.com/andygrunwald/go-jira v1.16.0
+# github.com/andygrunwald/go-jira v1.16.0 => github.com/openshift-splat-team/go-jira v0.0.0-20240712161511-70691c5c4f8a
 ## explicit; go 1.15
 github.com/andygrunwald/go-jira
 # github.com/aws/aws-sdk-go v1.38.49
@@ -402,7 +402,7 @@ github.com/munnerz/goautoneg
 # github.com/opencontainers/go-digest v1.0.0
 ## explicit; go 1.13
 github.com/opencontainers/go-digest
-# github.com/openshift-splat-team/jira-bot v0.0.0-20240306184102-ae0ce859cefa
+# github.com/openshift-splat-team/jira-bot v0.0.0-20240712162818-2d3d0e113524
 ## explicit; go 1.21
 github.com/openshift-splat-team/jira-bot/cmd/issue
 github.com/openshift-splat-team/jira-bot/pkg/util
@@ -1219,3 +1219,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 ## explicit; go 1.12
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
+# github.com/andygrunwald/go-jira => github.com/openshift-splat-team/go-jira v0.0.0-20240712161511-70691c5c4f8a

@@ -11,7 +11,7 @@ require (
 	github.com/expr-lang/expr v1.16.4
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/mmcdole/gofeed v1.3.0
-	github.com/openshift-splat-team/jira-bot v0.0.0-20240306184102-ae0ce859cefa
+	github.com/openshift-splat-team/jira-bot v0.0.0-20240712162818-2d3d0e113524
 	github.com/openshift/must-gather-clean v0.0.2-0.20231124103907-ea6ee7996e42
 	github.com/prometheus/client_golang v1.13.0
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
@@ -165,3 +165,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+replace github.com/andygrunwald/go-jira => github.com/openshift-splat-team/go-jira v0.0.0-20240712161511-70691c5c4f8a
