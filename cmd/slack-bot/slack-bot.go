@@ -11,6 +11,7 @@ import (
 	"github.com/slack-go/slack"
 
 	"github.com/openshift-splat-team/splat-bot/pkg/commands"
+	_ "github.com/openshift-splat-team/splat-bot/pkg/controllers"
 	_ "github.com/openshift-splat-team/splat-bot/pkg/knowledge"
 	slackutil "github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack/socketmode"
