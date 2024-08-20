@@ -13,9 +13,6 @@ import (
 const (
 	FieldStoryPoints   = "customfield_12310243"
 	FieldStatusSummary = "customfield_12320841"
-	FieldEpicLink 	= "customfield_12311140"
-	FieldFeatureLink = "customfield_12318341"
-
 )
 
 func GetJiraClient() (*jira.Client, error) {
@@ -50,23 +47,6 @@ func GetStoryPoints(totalMap map[string]interface{}) float64 {
 	}
 	return 0
 }
-
-// GetParentLinks retrieves the parent links from the total map
-func GetParentLinks(totalMap map[string]interface{}) (string, string) {	
-	var epicLink, featureLink string
-	var val interface{}
-	val = totalMap[FieldEpicLink]
-	if val != nil {
-		epicLink = val.(string)
-	}
-	val = totalMap[FieldFeatureLink]
-	if val != nil {
-		featureLink = val.(map[string]interface{})["key"].(string)
-	}
-	log.Printf("epic link: %s -- feature link: %s", epicLink, featureLink)
-	return epicLink, featureLink
-}
-
 
 // GetIssueType retrieves the identified issue type from Jira
 func GetIssueType(project *jira.Project, typeID string) (*jira.IssueType, error) {

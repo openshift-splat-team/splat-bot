@@ -88,13 +88,6 @@ type Attachment struct {
 	Thumbnail string `json:"thumbnail,omitempty" structs:"thumbnail,omitempty"`
 }
 
-type Security struct {
-	ID          int    `json:"id" structs:"id"`
-	Self        string `json:"self" structs:"self"`
-	Name        string `json:"name" structs:"name"`
-	Description string `json:"description" structs:"description"`
-}
-
 // Epic represents the epic to which an issue is associated
 // Not that this struct does not process the returned "color" value
 type Epic struct {
@@ -113,45 +106,44 @@ type IssueFields struct {
 	//      * "workratio": -1,
 	//      * "lastViewed": null,
 	//      * "environment": null,
-	Expand                        string                 `json:"expand,omitempty" structs:"expand,omitempty"`
-	Type                          IssueType              `json:"issuetype,omitempty" structs:"issuetype,omitempty"`
-	Project                       Project                `json:"project,omitempty" structs:"project,omitempty"`
-	Environment                   string                 `json:"environment,omitempty" structs:"environment,omitempty"`
-	Resolution                    *Resolution            `json:"resolution,omitempty" structs:"resolution,omitempty"`
-	Priority                      *Priority              `json:"priority,omitempty" structs:"priority,omitempty"`
-	Resolutiondate                Time                   `json:"resolutiondate,omitempty" structs:"resolutiondate,omitempty"`
-	Created                       Time                   `json:"created,omitempty" structs:"created,omitempty"`
-	Duedate                       Date                   `json:"duedate,omitempty" structs:"duedate,omitempty"`
-	Watches                       *Watches               `json:"watches,omitempty" structs:"watches,omitempty"`
-	Assignee                      *User                  `json:"assignee,omitempty" structs:"assignee,omitempty"`
-	Updated                       Time                   `json:"updated,omitempty" structs:"updated,omitempty"`
-	Description                   string                 `json:"description,omitempty" structs:"description,omitempty"`
-	Summary                       string                 `json:"summary,omitempty" structs:"summary,omitempty"`
-	Security                      map[string]interface{} `json:"security,omitempty" structs:"security,omitempty"`
-	Creator                       *User                  `json:"Creator,omitempty" structs:"Creator,omitempty"`
-	Reporter                      *User                  `json:"reporter,omitempty" structs:"reporter,omitempty"`
-	Components                    []*Component           `json:"components,omitempty" structs:"components,omitempty"`
-	Status                        *Status                `json:"status,omitempty" structs:"status,omitempty"`
-	Progress                      *Progress              `json:"progress,omitempty" structs:"progress,omitempty"`
-	AggregateProgress             *Progress              `json:"aggregateprogress,omitempty" structs:"aggregateprogress,omitempty"`
-	TimeTracking                  *TimeTracking          `json:"timetracking,omitempty" structs:"timetracking,omitempty"`
-	TimeSpent                     int                    `json:"timespent,omitempty" structs:"timespent,omitempty"`
-	TimeEstimate                  int                    `json:"timeestimate,omitempty" structs:"timeestimate,omitempty"`
-	TimeOriginalEstimate          int                    `json:"timeoriginalestimate,omitempty" structs:"timeoriginalestimate,omitempty"`
-	Worklog                       *Worklog               `json:"worklog,omitempty" structs:"worklog,omitempty"`
-	IssueLinks                    []*IssueLink           `json:"issuelinks,omitempty" structs:"issuelinks,omitempty"`
-	Comments                      *Comments              `json:"comment,omitempty" structs:"comment,omitempty"`
-	FixVersions                   []*FixVersion          `json:"fixVersions,omitempty" structs:"fixVersions,omitempty"`
-	AffectsVersions               []*AffectsVersion      `json:"versions,omitempty" structs:"versions,omitempty"`
-	Labels                        []string               `json:"labels,omitempty" structs:"labels,omitempty"`
-	Subtasks                      []*Subtasks            `json:"subtasks,omitempty" structs:"subtasks,omitempty"`
-	Attachments                   []*Attachment          `json:"attachment,omitempty" structs:"attachment,omitempty"`
-	Epic                          *Epic                  `json:"epic,omitempty" structs:"epic,omitempty"`
-	Sprint                        *Sprint                `json:"sprint,omitempty" structs:"sprint,omitempty"`
-	Parent                        *Parent                `json:"parent,omitempty" structs:"parent,omitempty"`
-	AggregateTimeOriginalEstimate int                    `json:"aggregatetimeoriginalestimate,omitempty" structs:"aggregatetimeoriginalestimate,omitempty"`
-	AggregateTimeSpent            int                    `json:"aggregatetimespent,omitempty" structs:"aggregatetimespent,omitempty"`
-	AggregateTimeEstimate         int                    `json:"aggregatetimeestimate,omitempty" structs:"aggregatetimeestimate,omitempty"`
+	Expand                        string            `json:"expand,omitempty" structs:"expand,omitempty"`
+	Type                          IssueType         `json:"issuetype,omitempty" structs:"issuetype,omitempty"`
+	Project                       Project           `json:"project,omitempty" structs:"project,omitempty"`
+	Environment                   string            `json:"environment,omitempty" structs:"environment,omitempty"`
+	Resolution                    *Resolution       `json:"resolution,omitempty" structs:"resolution,omitempty"`
+	Priority                      *Priority         `json:"priority,omitempty" structs:"priority,omitempty"`
+	Resolutiondate                Time              `json:"resolutiondate,omitempty" structs:"resolutiondate,omitempty"`
+	Created                       Time              `json:"created,omitempty" structs:"created,omitempty"`
+	Duedate                       Date              `json:"duedate,omitempty" structs:"duedate,omitempty"`
+	Watches                       *Watches          `json:"watches,omitempty" structs:"watches,omitempty"`
+	Assignee                      *User             `json:"assignee,omitempty" structs:"assignee,omitempty"`
+	Updated                       Time              `json:"updated,omitempty" structs:"updated,omitempty"`
+	Description                   string            `json:"description,omitempty" structs:"description,omitempty"`
+	Summary                       string            `json:"summary,omitempty" structs:"summary,omitempty"`
+	Creator                       *User             `json:"Creator,omitempty" structs:"Creator,omitempty"`
+	Reporter                      *User             `json:"reporter,omitempty" structs:"reporter,omitempty"`
+	Components                    []*Component      `json:"components,omitempty" structs:"components,omitempty"`
+	Status                        *Status           `json:"status,omitempty" structs:"status,omitempty"`
+	Progress                      *Progress         `json:"progress,omitempty" structs:"progress,omitempty"`
+	AggregateProgress             *Progress         `json:"aggregateprogress,omitempty" structs:"aggregateprogress,omitempty"`
+	TimeTracking                  *TimeTracking     `json:"timetracking,omitempty" structs:"timetracking,omitempty"`
+	TimeSpent                     int               `json:"timespent,omitempty" structs:"timespent,omitempty"`
+	TimeEstimate                  int               `json:"timeestimate,omitempty" structs:"timeestimate,omitempty"`
+	TimeOriginalEstimate          int               `json:"timeoriginalestimate,omitempty" structs:"timeoriginalestimate,omitempty"`
+	Worklog                       *Worklog          `json:"worklog,omitempty" structs:"worklog,omitempty"`
+	IssueLinks                    []*IssueLink      `json:"issuelinks,omitempty" structs:"issuelinks,omitempty"`
+	Comments                      *Comments         `json:"comment,omitempty" structs:"comment,omitempty"`
+	FixVersions                   []*FixVersion     `json:"fixVersions,omitempty" structs:"fixVersions,omitempty"`
+	AffectsVersions               []*AffectsVersion `json:"versions,omitempty" structs:"versions,omitempty"`
+	Labels                        []string          `json:"labels,omitempty" structs:"labels,omitempty"`
+	Subtasks                      []*Subtasks       `json:"subtasks,omitempty" structs:"subtasks,omitempty"`
+	Attachments                   []*Attachment     `json:"attachment,omitempty" structs:"attachment,omitempty"`
+	Epic                          *Epic             `json:"epic,omitempty" structs:"epic,omitempty"`
+	Sprint                        *Sprint           `json:"sprint,omitempty" structs:"sprint,omitempty"`
+	Parent                        *Parent           `json:"parent,omitempty" structs:"parent,omitempty"`
+	AggregateTimeOriginalEstimate int               `json:"aggregatetimeoriginalestimate,omitempty" structs:"aggregatetimeoriginalestimate,omitempty"`
+	AggregateTimeSpent            int               `json:"aggregatetimespent,omitempty" structs:"aggregatetimespent,omitempty"`
+	AggregateTimeEstimate         int               `json:"aggregatetimeestimate,omitempty" structs:"aggregatetimeestimate,omitempty"`
 	Unknowns                      tcontainer.MarshalMap
 }
 
@@ -621,7 +613,7 @@ type RemoteLinkStatus struct {
 // This can be an issue id, or an issue key.
 // If the issue cannot be found via an exact match, Jira will also look for the issue in a case-insensitive way, or by looking to see if the issue was moved.
 //
-// # The given options will be appended to the query string
+// The given options will be appended to the query string
 //
 // Jira API docs: https://docs.atlassian.com/jira/REST/latest/#api/2/issue-getIssue
 func (s *IssueService) GetWithContext(ctx context.Context, issueID string, options *GetQueryOptions) (*Issue, *Response, error) {
@@ -1303,17 +1295,15 @@ func (s *IssueService) DoTransitionWithPayload(ticketID, payload interface{}) (*
 }
 
 // InitIssueWithMetaAndFields returns Issue with with values from fieldsConfig properly set.
-//   - metaProject should contain metaInformation about the project where the issue should be created.
-//   - metaIssuetype is the MetaInformation about the Issuetype that needs to be created.
-//   - fieldsConfig is a key->value pair where key represents the name of the field as seen in the UI
-//     And value is the string value for that particular key.
-//
+//  * metaProject should contain metaInformation about the project where the issue should be created.
+//  * metaIssuetype is the MetaInformation about the Issuetype that needs to be created.
+//  * fieldsConfig is a key->value pair where key represents the name of the field as seen in the UI
+//		And value is the string value for that particular key.
 // Note: This method doesn't verify that the fieldsConfig is complete with mandatory fields. The fieldsConfig is
-//
-//	supposed to be already verified with MetaIssueType.CheckCompleteAndAvailable. It will however return
-//	error if the key is not found.
-//	All values will be packed into Unknowns. This is much convenient. If the struct fields needs to be
-//	configured as well, marshalling and unmarshalling will set the proper fields.
+//		 supposed to be already verified with MetaIssueType.CheckCompleteAndAvailable. It will however return
+//		 error if the key is not found.
+//		 All values will be packed into Unknowns. This is much convenient. If the struct fields needs to be
+//		 configured as well, marshalling and unmarshalling will set the proper fields.
 func InitIssueWithMetaAndFields(metaProject *MetaProject, metaIssuetype *MetaIssueType, fieldsConfig map[string]string) (*Issue, error) {
 	issue := new(Issue)
 	issueFields := new(IssueFields)
