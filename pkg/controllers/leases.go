@@ -73,6 +73,7 @@ func AcquireLease(ctx context.Context, user string, cpus, memory int, pool strin
 			VCpus:        cpus,
 			Memory:       memory,
 			Networks:     1,
+			NetworkType:  v1.NetworkTypeMultiTenant,
 			RequiredPool: pool,
 		},
 	}
@@ -99,6 +100,7 @@ func AcquireLease(ctx context.Context, user string, cpus, memory int, pool strin
 				Memory:       0,
 				Networks:     1,
 				RequiredPool: pool,
+				NetworkType:  v1.NetworkTypeMultiTenant,
 			},
 		}
 		err := k8sclient.Create(ctx, networkOnlyLease)
