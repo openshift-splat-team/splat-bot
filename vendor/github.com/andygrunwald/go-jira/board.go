@@ -65,14 +65,14 @@ type SprintsList struct {
 
 // Sprint represents a sprint on Jira agile board
 type Sprint struct {
-	ID            int        `json:"id,omitempty" structs:"id,omitempty"`
+	ID            int        `json:"id" structs:"id"`
 	Name          string     `json:"name" structs:"name"`
-	CompleteDate  *time.Time `json:"completeDate,omitempty" structs:"completeDate,omitempty"`
+	CompleteDate  *time.Time `json:"completeDate" structs:"completeDate"`
 	EndDate       *time.Time `json:"endDate" structs:"endDate"`
 	StartDate     *time.Time `json:"startDate" structs:"startDate"`
 	OriginBoardID int        `json:"originBoardId" structs:"originBoardId"`
-	Self          string     `json:"self,omitempty" structs:"self,omitempty"`
-	State         string     `json:"state,omitempty" structs:"state,omitempty"`
+	Self          string     `json:"self" structs:"self"`
+	State         string     `json:"state" structs:"state"`
 }
 
 // BoardConfiguration represents a boardConfiguration of a jira board

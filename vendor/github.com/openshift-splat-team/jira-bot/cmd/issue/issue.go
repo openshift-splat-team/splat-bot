@@ -12,8 +12,6 @@ type issueCommandOptions struct {
 	state                   string
 	priority                string
 	summary                 string
-	label                   string
-	skipLabel               string
 	description             string
 	issueType               string
 	project                 string

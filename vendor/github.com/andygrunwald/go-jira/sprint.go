@@ -86,7 +86,7 @@ func (s *SprintService) GetIssuesForSprint(sprintID int) ([]Issue, *Response, er
 // This can be an issue id, or an issue key.
 // If the issue cannot be found via an exact match, Jira will also look for the issue in a case-insensitive way, or by looking to see if the issue was moved.
 //
-// # The given options will be appended to the query string
+// The given options will be appended to the query string
 //
 // Jira API docs: https://docs.atlassian.com/jira-software/REST/7.3.1/#agile/1.0/issue-getIssue
 //
@@ -122,24 +122,4 @@ func (s *SprintService) GetIssueWithContext(ctx context.Context, issueID string,
 // GetIssue wraps GetIssueWithContext using the background context.
 func (s *SprintService) GetIssue(issueID string, options *GetQueryOptions) (*Issue, *Response, error) {
 	return s.GetIssueWithContext(context.Background(), issueID, options)
-}
-
-// CreateSprint creates a new sprint.
-func (s *SprintService) CreateSprint(ctx context.Context, sprint *Sprint) (*Sprint, *Response, error) {
-	apiEndpoint := "rest/agile/1.0/sprint"
-
-	req, err := s.client.NewRequestWithContext(ctx, "POST", apiEndpoint, sprint)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	resp, err := s.client.Do(req, sprint)
-
-	if err != nil {
-		jerr := NewJiraError(resp, err)
-		return nil, resp, jerr
-	}
-
-	return sprint, resp, nil
 }
