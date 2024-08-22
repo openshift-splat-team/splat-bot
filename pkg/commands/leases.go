@@ -9,10 +9,11 @@ import (
 
 	"github.com/openshift-splat-team/splat-bot/pkg/controllers"
 
-	"github.com/openshift-splat-team/splat-bot/data"
-	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+
+	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 )
 
 func init() {
@@ -70,7 +71,7 @@ var LeasesAttributes = data.Attributes{
 			case "acquire":
 				options := getLeaseOptions(args)
 
-				_, err := controllers.AcquireLease(ctx, evt.User, options.cpus, options.memory, options.pool, options.networks)
+				_, err := controllers.AcquireLease(ctx, evt.User, options.cpus, options.memory, options.pool, options.networks, controllers.SplatBotOcpLease)
 				if err != nil {
 					return util.StringToBlock(err.Error(), false), fmt.Errorf("failed to acquire lease: %w", err)
 				}

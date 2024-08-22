@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	awstypes "github.com/aws/aws-sdk-go-v2/service/route53/types"
-	"github.com/openshift-splat-team/splat-bot/pkg/util"
-	"k8s.io/apimachinery/pkg/labels"
 	"log"
 	"os"
 	"strconv"
@@ -15,18 +12,32 @@ import (
 	"text/tabwriter"
 	"time"
 
+	awstypes "github.com/aws/aws-sdk-go-v2/service/route53/types"
+	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	v1 "github.com/openshift-splat-team/vsphere-capacity-manager/pkg/apis/vspherecapacitymanager.splat.io/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	v1 "github.com/openshift-splat-team/vsphere-capacity-manager/pkg/apis/vspherecapacitymanager.splat.io/v1"
+)
+
+type SplatBotLeaseType string
+
+const (
+	SplatBotNestedLease SplatBotLeaseType = "nested"
+	SplatBotOcpLease    SplatBotLeaseType = "ocp"
 )
 
 const (
+	SplatBotLeaseTypeLabel   = "splat-bot-lease-type"
 	SplatBotLeaseOwner       = "splat-bot-owner"
 	userLeaseFinalizer       = "vsphere-capacity-manager.splat-team.io/user-lease-finalizer"
 	userLeaseRenewLabel      = "vsphere-capacity-manager.splat-team.io/renew-counts"
@@ -45,7 +56,7 @@ var (
 	userLeases = make(map[string]*v1.Lease)
 )
 
-func AcquireLease(ctx context.Context, user string, cpus, memory int, pool string, networks int) (*v1.Lease, error) {
+func AcquireLease(ctx context.Context, user string, cpus, memory int, pool string, networks int, leaseType SplatBotLeaseType) (*v1.Lease, error) {
 	leaseMu.Lock()
 	if _, exists := userLeases[user]; exists {
 		leaseMu.Unlock()
@@ -66,7 +77,8 @@ func AcquireLease(ctx context.Context, user string, cpus, memory int, pool strin
 				SplatBotLeaseOwner: user,
 			},
 			Labels: map[string]string{
-				SplatBotLeaseOwner: user,
+				SplatBotLeaseOwner:     user,
+				SplatBotLeaseTypeLabel: string(leaseType),
 			},
 		},
 		Spec: v1.LeaseSpec{

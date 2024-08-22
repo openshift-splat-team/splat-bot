@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	awstypes "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"log"
 	"os"
 	"path"
+	"strings"
 	"time"
 
-	"github.com/openshift-splat-team/splat-bot/pkg/util"
-	v1 "github.com/openshift-splat-team/vsphere-capacity-manager/pkg/apis/vspherecapacitymanager.splat.io/v1"
+	awstypes "github.com/aws/aws-sdk-go-v2/service/route53/types"
+
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -20,7 +20,9 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
+
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
+	v1 "github.com/openshift-splat-team/vsphere-capacity-manager/pkg/apis/vspherecapacitymanager.splat.io/v1"
 )
 
 type UserReconciler struct {
@@ -358,6 +360,8 @@ func (l *UserReconciler) Reconcile() {
 							l.adminMinterPassword,
 							lease.Name,
 							password,
+
+							// todo: jcallen: is this group privileges enough for nested vsphere?
 							"CI")
 						if err != nil {
 							log.Printf("unable to create user: %v", err)
@@ -374,6 +378,12 @@ func (l *UserReconciler) Reconcile() {
 						log.Printf("unable to create route53 records: %v", err)
 						_ = l.sendUserMessage(l.client, lease, fmt.Sprintf("unable to create route53 records. you'll need to create them yourself :(. %v", err))
 					}
+
+					// todo: jcallen: instead of sending lease details we need to start ansible
+					// todo: jcallen: we also need to wait for ansible to complete which will probably be a while
+					// todo: jcallen: we will probably need a new label "nested is available"
+					// todo: jcallen: also we need a branch this is nested do somethign else.
+
 					err = l.sendLeaseDetails(ctx, l.client, lease, network)
 					if err != nil {
 						log.Printf("unable to send lease details: %v", err)
