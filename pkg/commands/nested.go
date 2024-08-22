@@ -40,7 +40,7 @@ var Nested = data.Attributes{
 					}
 				}
 
-				_, err = controllers.AcquireLease(ctx, evt.User, options.cpus, options.memory, options.pool, options.networks)
+				_, err = controllers.AcquireLease(ctx, evt.User, options.cpus, options.memory, options.pool, options.networks, controllers.SplatBotNestedLease)
 				if err != nil {
 					return util.StringToBlock(err.Error(), false), fmt.Errorf("failed to acquire lease: %w", err)
 				}
