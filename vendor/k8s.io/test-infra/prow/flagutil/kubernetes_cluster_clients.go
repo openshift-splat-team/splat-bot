@@ -363,6 +363,8 @@ func (o *KubernetesOptions) BuildClusterManagers(dryRun bool, requiredTestPodVer
 
 	options := manager.Options{
 		LeaderElection:     false,
+		MetricsBindAddress: "0",
+		DryRunClient:       o.dryRun,
 	}
 	for _, opt := range opts {
 		opt(&options)
@@ -389,6 +391,21 @@ func (o *KubernetesOptions) BuildClusterManagers(dryRun bool, requiredTestPodVer
 				return
 			}
 
+			// Check to see if we are able to perform actions against pods in
+			// the build cluster. The actions are given in requiredTestPodVerbs.
+			authzClient, err := authorizationv1.NewForConfig(&config)
+			if err != nil {
+				lock.Lock()
+				errs = append(errs, fmt.Errorf("failed to construct authz client: %s", err))
+				lock.Unlock()
+				return
+			}
+			if err := CheckAuthorizations(authzClient.SelfSubjectAccessReviews(), options.Namespace, requiredTestPodVerbs); err != nil {
+				lock.Lock()
+				errs = append(errs, fmt.Errorf("failed pod resource authorization check: %w", err))
+				lock.Unlock()
+				return
+			}
 
 			lock.Lock()
 			res[name] = mgr
@@ -416,6 +433,16 @@ func (o *KubernetesOptions) BuildClusterManagers(dryRun bool, requiredTestPodVer
 					// If there are any errors with this (still troublesome)
 					// build cluster, keep checking.
 					if _, err := manager.New(&buildClusterConfig, options); err != nil {
+						logrus.WithField("build-cluster", buildClusterName).Tracef("failed to construct build cluster manager: %s", err)
+						continue
+					}
+
+					authzClient, err := authorizationv1.NewForConfig(&buildClusterConfig)
+					if err != nil {
+						logrus.WithField("build-cluster", buildClusterName).Tracef("failed to construct authz client: %s", err)
+						continue
+					}
+					if err := CheckAuthorizations(authzClient.SelfSubjectAccessReviews(), options.Namespace, requiredTestPodVerbs); err != nil {
 						logrus.WithField("build-cluster", buildClusterName).Tracef("failed to construct build cluster manager: %s", err)
 						continue
 					}
