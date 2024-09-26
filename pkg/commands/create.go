@@ -11,19 +11,36 @@ import (
 	"github.com/slack-go/slack/slackevents"
 )
 
+const issueTemplate = `
+*User Story:*
+As a ___ I want ___ so I can ___.
+
+*Description:*
+< Record any background information >
+
+*Acceptance Criteria:*
+< Record how we'll know we're done >
+
+*Other Information:*
+< Record anything else that may be helpful to someone else picking up the card >
+
+issue created by splat-bot
+`
+
 var CreateAttributes = data.Attributes{
 	Commands:       []string{"jira", "create"},
 	RequireMention: true,
 	Callback: func(ctx context.Context, client util.SlackClientInterface, evt *slackevents.MessageEvent, args []string) ([]slack.MsgOption, error) {
 		url := util.GetThreadUrl(evt)
 		fmt.Printf("%v", args)
-		description := args[2]
-		if len(url) > 0 {
-			description = fmt.Sprintf("%s\n\ncreated from thread: %s", description, url)
-		}
-		description = fmt.Sprintf("%s\nissue created by splat-bot\n", description)
+		summary := args[2]
+		description := issueTemplate
 
-		issue, err := issue.CreateIssue("SPLAT", "splat-bot: generated issue", description, "Task")
+		if len(url) > 0 {
+			description = fmt.Sprintf("%s\n\ncreated from thread: %s", issueTemplate, url)
+		}
+
+		issue, err := issue.CreateIssue("SPLAT", summary, description, "Task")
 		if err != nil {
 			return util.WrapErrorToBlock(err, "error creating issue"), nil
 		}
