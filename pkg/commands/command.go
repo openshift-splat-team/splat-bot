@@ -204,11 +204,18 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 			if attribute.MustBeInThread && !inThread {
 				continue
 			}
+
+			maxExceeded := false
+			if attribute.MaxArgs > 0 && len(args) > attribute.MaxArgs {
+				maxExceeded = true
+			}
+			minRequired := attribute.RequiredArgs > 0 && len(args) < attribute.RequiredArgs
+
 			if len(args) < attribute.RequiredArgs {
 				response = []slack.MsgOption{
 					slack.MsgOptionText(fmt.Sprintf("command requires %d arguments.\n%s\n", attribute.RequiredArgs, attribute.HelpMarkdown), true),
 				}
-			} else if attribute.RequiredArgs > 0 && len(args) > attribute.RequiredArgs {
+			} else if minRequired || maxExceeded {
 				response = []slack.MsgOption{
 					slack.MsgOptionText(fmt.Sprintf("command requires %d arguments. if an argument is greater than one word, be sure to wrap that argument in quotes.\n%s\n", attribute.RequiredArgs, attribute.HelpMarkdown), true),
 				}

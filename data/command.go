@@ -20,6 +20,8 @@ type Attributes struct {
 	MessageOfInterest MessageOfInterest
 	// The number of arguments a command must have. var args are not supported.
 	RequiredArgs int
+	// MaxArgs The maximum number of allowed arguments
+	MaxArgs int
 	// Callback function called when the attributes are met
 	Callback Callback
 	// Rank: Future - in a situation where multiple regexes match, this allows a priority to be assigned.
