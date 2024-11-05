@@ -85,9 +85,7 @@ func GetPoolStatus() (slack.MsgOption, error) {
 		slack.NewDividerBlock(),
 	}
 
-	for _, rtBlock := range rtBlocks {
-		blocks = append(blocks, rtBlock)
-	}
+	blocks = append(blocks, rtBlocks...)
 
 	return slack.MsgOptionBlocks(blocks...), nil
 }
