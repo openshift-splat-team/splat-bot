@@ -3,18 +3,17 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"log"
-	"strings"
-	"sync"
-	"text/tabwriter"
-
 	v1 "github.com/openshift-splat-team/vsphere-capacity-manager/pkg/apis/vspherecapacitymanager.splat.io/v1"
+	"github.com/slack-go/slack"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"log"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
+	"sync"
 )
 
 var (
@@ -40,38 +39,57 @@ func SetPoolSchedulable(ctx context.Context, name string, schedulable bool) erro
 	return nil
 }
 
-func GetPoolStatus() (string, error) {
-	var resultsBuilder strings.Builder
+func GetPoolStatus() (slack.MsgOption, error) {
 	poolsMu.Lock()
 	defer poolsMu.Unlock()
 
-	tbwrite := tabwriter.NewWriter(&resultsBuilder, 0, 0, 0, ' ', tabwriter.Debug)
+	var rtBlocks []slack.Block
 
-	_, err := fmt.Fprint(tbwrite, "```\n")
-	if err != nil {
-		return "", err
-	}
-	_, err = fmt.Fprint(tbwrite, "Pool\tAvail CPUs\tAvail Mem(GB)\tSchedulable\t\n")
-	if err != nil {
-		return "", err
-	}
+	for idx, pool := range pools {
+		var rtElems []slack.RichTextElement
 
-	for k, v := range pools {
-		_, err := fmt.Fprintf(tbwrite, "%s\t%d\t%d\t%t\t\n", k, v.Status.VCpusAvailable, v.Status.MemoryAvailable, !v.Spec.NoSchedule)
-		if err != nil {
-			return "", err
+		availCPU := float64(100) * float64(pool.Status.VCpusAvailable) / float64(pool.Spec.VCpus)
+		availMemory := float64(100) * float64(pool.Status.MemoryAvailable) / float64(pool.Spec.Memory)
+		status := fmt.Sprintf("\tCPU: %.0f%%, Memory: %.0f%%", availCPU, availMemory)
+		color := "large_green_circle"
+		if pool.Spec.NoSchedule {
+			status = fmt.Sprintf("\t!! Cordoned !! %s", status)
+			color = "black_circle"
+		} else {
+			if availCPU < 20 {
+				color = "red_circle"
+			} else if availMemory < 20 {
+				color = "red_circle"
+			} else if availCPU < 50 {
+				color = "large_yellow_circle"
+			} else if availMemory < 50 {
+				color = "large_yellow_circle"
+			}
 		}
-	}
-	_, err = fmt.Fprint(tbwrite, "\n```")
-	if err != nil {
-		return "", err
+
+		rtElems = append(rtElems, slack.NewRichTextSection([]slack.RichTextSectionElement{
+			slack.NewRichTextSectionEmojiElement(color, 2, nil),
+			slack.NewRichTextSectionTextElement(fmt.Sprintf(" %s\n", pool.Name), &slack.RichTextSectionTextStyle{Bold: true}),
+			slack.NewRichTextSectionTextElement(status, &slack.RichTextSectionTextStyle{}),
+		}...))
+
+		rtBlocks = append(rtBlocks, slack.NewRichTextBlock(fmt.Sprintf("pool-status-%s", idx), rtElems...))
+		/*rtBlocks = append(rtBlocks, slack.NewSectionBlock(slack.NewTextBlockObject(slack.PlainTextType, ".", false, false), nil, slack.NewAccessory(
+		slack.NewButtonBlockElement(fmt.Sprintf("cordon-%s", idx), "cordon", slack.NewTextBlockObject(slack.PlainTextType, "cordon", false, false)))))*/
+		rtBlocks = append(rtBlocks, slack.NewDividerBlock())
 	}
 
-	err = tbwrite.Flush()
-	if err != nil {
-		return "", err
+	blocks := []slack.Block{
+		slack.NewHeaderBlock(slack.NewTextBlockObject(slack.PlainTextType, "CI Pool Status", false, false)),
+		slack.NewSectionBlock(slack.NewTextBlockObject(slack.PlainTextType, "Pool status shows free CPU and memory as well as the state of the pools.\n\n", false, false), nil, nil),
+		slack.NewDividerBlock(),
 	}
-	return resultsBuilder.String(), nil
+
+	for _, rtBlock := range rtBlocks {
+		blocks = append(blocks, rtBlock)
+	}
+
+	return slack.MsgOptionBlocks(blocks...), nil
 }
 
 type PoolReconciler struct {

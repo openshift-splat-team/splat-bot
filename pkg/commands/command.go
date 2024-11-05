@@ -48,11 +48,8 @@ func getAttributes() []data.Attributes {
 }
 
 func init() {
-	AddCommand(CreateSummaryAttributes)
 	AddCommand(CreateAttributes)
-	AddCommand(SummarizeAttributes)
 	AddCommand(HelpAttributes)
-	AddCommand(UnsizedAttributes)
 	AddCommand(ProwAttributes)
 	AddCommand(ProwGraphAttributes)
 	AddCommand(ProviderSummaryAttributes)
@@ -222,7 +219,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 			} else {
 				response, err = attribute.Callback(ctx, client, msg, args)
 				if err != nil {
-					log.Printf("failed processing message: %v", err)
+					log.Printf("failed processing message: %v, %v", err, response)
 				}
 			}
 			if len(response) > 0 {
