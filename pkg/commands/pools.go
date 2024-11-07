@@ -23,39 +23,41 @@ var PoolsAttributes = data.Attributes{
 		var err error
 		if len(args) > 2 {
 			switch args[2] {
-			case "schedulable":
+			case "uncordon":
 				if len(args) < 4 {
-					return util.StringToBlock(err.Error(), false), fmt.Errorf("pool schedule requires the name of the pool")
+					return util.StringToBlock(err.Error(), false), fmt.Errorf("requires the name or index of the pool")
 				}
 				err = controllers.SetPoolSchedulable(ctx, args[3], true)
 				if err != nil {
-					return util.StringToBlock(err.Error(), false), fmt.Errorf("failed to set pool schedulable: %w", err)
+					return util.StringToBlock(err.Error(), false), fmt.Errorf("failed to uncordon pool: %w", err)
 				}
-				result = "pool is schedulable"
-			case "unschedulable":
+				result = "pool is uncordoned"
+			case "cordon":
 				if len(args) < 4 {
-					return util.StringToBlock(err.Error(), false), fmt.Errorf("pool unschedule requires the name of the pool")
+					return util.StringToBlock(err.Error(), false), fmt.Errorf("requires the name or index of the pool")
 				}
 				err = controllers.SetPoolSchedulable(ctx, args[3], false)
 				if err != nil {
 					return util.StringToBlock(err.Error(), false), fmt.Errorf("failed to set pool unschedulable: %w", err)
 				}
-				result = "pool is unschedulable"
+				result = "pool is cordoned"
+			case "status":
+				fallthrough
 			case "list":
 				fallthrough
 			default:
-				result, err = controllers.GetPoolStatus()
+				result, err := controllers.GetPoolStatus()
 				if err != nil {
 					return nil, fmt.Errorf("failed to fetch pool status: %w", err)
 				}
+				return []slack.MsgOption{result}, nil
 			}
-
 		}
 
 		return util.StringToBlock(result, false), nil
 	},
 	RequiredArgs: 0,
-	HelpMarkdown: "interact with vSphere CI pools: `ci pools list|schedulable|unschedulable <pool name>`",
+	HelpMarkdown: "interact with vSphere CI pools: `ci pools list|uncordoned|cordoned <pool name>`",
 	ShouldMatch: []string{
 		"ci pools list",
 		"ci pools schedulable pool-1",
