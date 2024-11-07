@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/openshift-splat-team/jira-bot/cmd/issue"
 	"log"
+	"strings"
 	"text/template"
 
 	"github.com/openshift-splat-team/splat-bot/data"
@@ -43,6 +44,13 @@ var issueTemplate *template.Template
 var assistantTemplate *template.Template
 var assistantResponse *template.Template
 
+var issueTypeMap = map[string]string{
+	"task":  "Task",
+	"bug":   "Bug",
+	"spike": "Spike",
+	"story": "Story",
+}
+
 func init() {
 	var err error
 
@@ -66,6 +74,7 @@ type assistantContext struct {
 	Principal string
 	Goal      string
 	Outcome   string
+	Type      string
 }
 
 func invokeTemplate(t *template.Template, data any) (string, error) {
@@ -92,6 +101,7 @@ var CreateAttributes = data.Attributes{
 			Principal: "OpenShift Engineer",
 			Goal:      "___",
 			Outcome:   "___",
+			Type:      "Task",
 		}
 		url := util.GetThreadUrl(evt)
 		fmt.Printf("%v", args)
@@ -104,6 +114,14 @@ var CreateAttributes = data.Attributes{
 			assistantCtx.Outcome = args[3]
 		}
 
+		if len(args) >= 5 {
+			issueType := args[4]
+			if _it, exists := issueTypeMap[strings.ToLower(issueType)]; exists {
+				assistantCtx.Type = _it
+			} else {
+				return util.StringToBlock("supported issue types are task(default), story, bug, spike", false), nil
+			}
+		}
 		// Execute the template and write the result into the buffer
 		description, err = invokeTemplate(issueTemplate, assistantCtx)
 		if err != nil {
@@ -114,7 +132,7 @@ var CreateAttributes = data.Attributes{
 			description = fmt.Sprintf("%s\n\ncreated from thread: %s", description, url)
 		}
 
-		issue, err := issue.CreateIssue("SPLAT", summary, description, "Task")
+		issue, err := issue.CreateIssue("SPLAT", summary, description, assistantCtx.Type)
 		if err != nil {
 			return util.WrapErrorToBlock(err, "error creating issue"), nil
 		}
@@ -156,7 +174,7 @@ var CreateAttributes = data.Attributes{
 		return util.StringToBlock(fmt.Sprintf("issue <%s|%s> created", issueURL, issueKey), false), nil
 	},
 	RequiredArgs: 3,
-	MaxArgs:      4,
+	MaxArgs:      5,
 	HelpMarkdown: "create a Jira issue: `jira create \"[description]\"`",
 	ShouldMatch: []string{
 		"jira create description",
