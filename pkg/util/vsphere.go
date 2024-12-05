@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/ssoadmin"
 	"github.com/vmware/govmomi/ssoadmin/types"
 	"github.com/vmware/govmomi/sts"
-	"log"
 	"math/big"
 	"net/url"
 	"os"
@@ -179,7 +179,7 @@ func CreateUserAccount(ctx context.Context,
 	vim25Client, _, logout, err := CreateVSphereClients(ctx, vcenterUrl, vCenterUser, vCenterPass)
 
 	if err != nil {
-		fmt.Printf("unable to create client: %v", err)
+		log.Debugf("unable to create client: %v", err)
 		os.Exit(1)
 	}
 

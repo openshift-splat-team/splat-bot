@@ -6,8 +6,8 @@ import (
 	"fmt"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/labels"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -136,7 +136,7 @@ func RemoveLease(ctx context.Context, user string) error {
 	}
 	log.Printf("found %d leases to delete", len(leases.Items))
 	for _, lease := range leases.Items {
-		fmt.Printf("removing lease %s\n", lease.Name)
+		log.Debugf("removing lease %s\n", lease.Name)
 		err = k8sclient.Delete(ctx, &lease)
 		if err != nil {
 			return fmt.Errorf("failed to delete lease: %v", err)

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/route53/types"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"time"

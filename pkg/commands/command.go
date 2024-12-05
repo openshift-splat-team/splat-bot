@@ -3,12 +3,12 @@ package commands
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"regexp"
 	"strings"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 
@@ -18,9 +18,10 @@ import (
 )
 
 var (
-	attributeMu  sync.Mutex
-	attributes   = []data.Attributes{}
-	allowedUsers = map[string]bool{}
+	attributeMu        sync.Mutex
+	attributes         = []data.Attributes{}
+	allowedUsers       = map[string]bool{}
+	enableChatResponse = false
 )
 
 // AddCommand adds a handler to the list of handlers. Matching of the message can be overriden
@@ -48,6 +49,10 @@ func getAttributes() []data.Attributes {
 }
 
 func init() {
+	_enableChatResponse := os.Getenv("ENABLE_CHAT_RESPONSE")
+	if _enableChatResponse != "" {
+		enableChatResponse = strings.ToLower(_enableChatResponse) == "true"
+	}
 	AddCommand(CreateAttributes)
 	AddCommand(HelpAttributes)
 	AddCommand(ProwAttributes)
@@ -63,19 +68,19 @@ func Initialize() error {
 	//        that nature.
 	allowed := os.Getenv("SLACK_ALLOWED_USERS")
 	if len(allowed) == 0 {
-		log.Printf("Disabling user enforcement.  Please configure SLACK_ALLOWED_USERS if you wish to enforce allowed users on certain commands.")
+		log.Warnf("Disabling user enforcement.  Please configure SLACK_ALLOWED_USERS if you wish to enforce allowed users on certain commands.")
 	} else {
 		allowedUsersIDs := strings.Split(allowed, ",")
 		for _, user := range allowedUsersIDs {
 			allowedUsers[user] = true
-			log.Printf("user id %s is allowed", user)
+			log.Infof("user id %s is allowed", user)
 		}
 	}
 	return nil
 }
 
 func isAllowedUser(evt *slackevents.MessageEvent) error {
-	fmt.Printf("User size: %d\n", len(allowedUsers))
+	log.Debugf("User size: %d\n", len(allowedUsers))
 	if _, found := allowedUsers[evt.User]; !found && len(allowedUsers) > 0 {
 		return fmt.Errorf("user %s with id %s is not allowed", evt.Username, evt.User)
 	}
@@ -121,6 +126,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 	case "message":
 	case "event_callback":
 	default:
+		log.Warnf("event type: %s discarded", evt.Type)
 		return nil
 	}
 
@@ -136,22 +142,23 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 			TimeStamp:       appMentionEvent.TimeStamp,
 			ThreadTimeStamp: appMentionEvent.ThreadTimeStamp,
 		}
+		log.Debugf("AppMentionEvent: %s; %s;\n%s", appMentionEvent.User, appMentionEvent.Channel, appMentionEvent.Text)
 	case *slackevents.MessageEvent:
 		msg = evt.InnerEvent.Data.(*slackevents.MessageEvent)
+		log.Debugf("MessageEvent: %s; %s;\n%s", msg.User, msg.Channel, msg.Text)
 	default:
 		return fmt.Errorf("received an unknown event type: %T", ev)
 	}
 
 	if len(msg.BotID) > 0 && util.IsSPLATBotID(msg.BotID) {
-		log.Printf("throwing away message from bot: %s", msg.BotID)
-		// throw away bot messages
+		log.Warnf("throwing away message from bot: %s", msg.BotID)
 		return nil
 	}
 
 	var args []string
 	var response []slack.MsgOption
 	for _, attribute := range getAttributes() {
-		log.Printf("Checking command: %v", attribute.Commands)
+		log.Debugf("checking command: %v", attribute.Commands)
 
 		// For app mention logic, there are two scenarios: 1.) Channel Msg.  2.) Direct Message
 		// For Channel messages, we want the event to be an AppMention if attribute.RequireMention.
@@ -159,11 +166,18 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 		// Note, for AppMessage, InnerEvent is AppMessageEvent, for Message, its MessageEvent.
 		if attribute.RequireMention {
 			if isAppMentionEvent && !util.ContainsBotMention(msg.Text) {
+				log.Warnf("command requires a mention: %s", msg.Text)
 				continue
 			} else if !isAppMentionEvent {
 				ieData := evt.InnerEvent.Data.(*slackevents.MessageEvent)
 				channelType := ieData.ChannelType
-				if channelType == slack.TYPE_CHANNEL || (channelType == slack.TYPE_IM && !util.ContainsBotMention(msg.Text)) {
+
+				if !util.ContainsBotMention(msg.Text) && channelType == slack.TYPE_CHANNEL {
+					log.Warnf("message is targeting a %s and doesnt contain a bot mention: %s", channelType, msg.Text)
+					continue
+				}
+				if channelType == slack.TYPE_IM && !util.ContainsBotMention(msg.Text) {
+					log.Warnf("message is targeting %s and doesnt contain a bot mention: %s", channelType, msg.Text)
 					continue
 				}
 			}
@@ -177,6 +191,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 				}
 			}
 			if !allowedInChannel {
+				log.Warnf("message must be in a DM: %s", msg.Text)
 				continue
 			}
 		}
@@ -187,7 +202,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 		}
 
 		if checkForCommand(args, attribute, msg.Channel) {
-			log.Printf("Found command: %v", attribute.Commands)
+			log.Debugf("found command: %v", attribute.Commands)
 			// Now that we found command, make sure it can be used by current user.
 			if !attribute.AllowNonSplatUsers {
 				err := isAllowedUser(msg)
@@ -199,6 +214,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 			var err error
 			inThread := len(util.GetThreadUrl(msg)) > 0
 			if attribute.MustBeInThread && !inThread {
+				log.Warnf("message must be in a thread, but isnt: %s", msg.Text)
 				continue
 			}
 
@@ -219,15 +235,15 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 			} else {
 				response, err = attribute.Callback(ctx, client, msg, args)
 				if err != nil {
-					log.Printf("failed processing message: %v, %v", err, response)
+					log.Warnf("failed processing message: %v, %v", err, response)
 				}
 			}
 			if len(response) > 0 {
-				log.Printf("responding to message: %v", response)
+				log.Debugf("responding to message: %v", response)
 				if attribute.RespondInDM {
 					channelID, err := getDMChannelID(client, msg)
 					if err != nil {
-						fmt.Printf("failed getting channel ID: %v", err)
+						log.Warnf("failed getting channel ID: %v", err)
 					}
 					msg.Channel = channelID
 				} else if !attribute.RespondInChannel {
@@ -236,7 +252,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 					response = append(response, slack.MsgOptionTS(msg.ThreadTimeStamp))
 				}
 
-				log.Printf("responding to message in channel: %s", msg.Channel)
+				log.Debugf("responding to message in channel: %s", msg.Channel)
 				if attribute.ResponseIsEphemeral {
 					_, err = client.PostEphemeral(msg.Channel, msg.User, response...)
 				} else {
@@ -247,24 +263,24 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 				}
 				return nil
 			}
-			log.Printf("next\n")
+			log.Debugf("finished processing command")
 		}
 	}
 
 	// if the message isn't handled, check to see if this is an IM message
 	// and the user is allowed.
-	if len(response) == 0 {
+	if len(response) == 0 && enableChatResponse {
 		ieData := msg
 		channelType := ieData.ChannelType
 		if channelType == slack.TYPE_IM && !util.ContainsBotMention(msg.Text) && (len(msg.BotID) == 0 || util.IsSPLATBotID(msg.BotID)) {
 			response, err := chat.HandleChatInteraction(ctx, client, msg)
 			if err != nil {
-				log.Printf("failed processing message: %v", err)
+				log.Warnf("failed processing message: %v", err)
 			}
 			if len(response) > 0 {
 				_, _, err = client.PostMessage(msg.Channel, response...)
 				if err != nil {
-					log.Printf("failed posting message: %v", err)
+					log.Warnf("failed posting message: %v", err)
 				}
 			}
 		}

@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"

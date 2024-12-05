@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+
 	"os"
 	"strings"
 
 	"github.com/openshift-splat-team/jira-bot/pkg/util"
 	"github.com/openshift/must-gather-clean/pkg/obfuscator"
 	"github.com/openshift/must-gather-clean/pkg/schema"
+	logrus "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
@@ -24,19 +26,19 @@ func init() {
 	newObfuscator, err := obfuscator.NewIPObfuscator(schema.ObfuscateReplacementTypeConsistent, tracker)
 	if err != nil {
 		// if we can't create obfuscators we need to crash out asap
-		log.Panicf("unable to create ip obfuscator: %v", err)
+		logrus.Panicf("unable to create ip obfuscator: %v", err)
 	}
 	obfuscators = append(obfuscators, newObfuscator)
 	newObfuscator, err = obfuscator.NewMacAddressObfuscator(schema.ObfuscateReplacementTypeConsistent, tracker)
 	if err != nil {
 		// if we can't create obfuscators we need to crash out asap
-		log.Panicf("unable to create mac obfuscator: %v", err)
+		logrus.Panicf("unable to create mac obfuscator: %v", err)
 	}
 	obfuscators = append(obfuscators, newObfuscator)
 	newObfuscator, err = obfuscator.NewRegexObfuscator(`^(?!:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$`, tracker)
 	if err != nil {
 		// if we can't create obfuscators we need to crash out asap
-		log.Panicf("unable to create mac obfuscator: %v", err)
+		logrus.Panicf("unable to create mac obfuscator: %v", err)
 	}
 	obfuscators = append(obfuscators, newObfuscator)
 }
@@ -122,7 +124,7 @@ func GetThreadUrl(event *slackevents.MessageEvent) string {
 func IsSPLATBotID(botID string) bool {
 	userID, ok := os.LookupEnv("SPLAT_BOT_USER_ID")
 	if !ok {
-		log.Println("no bot user id specified with SPLAT_BOT_USER_ID")
+		logrus.Warn("no bot user id specified with SPLAT_BOT_USER_ID")
 		return false
 	}
 	return botID == userID
@@ -131,14 +133,17 @@ func IsSPLATBotID(botID string) bool {
 func ContainsBotMention(messageText string) bool {
 	userID, ok := os.LookupEnv("SPLAT_BOT_USER_ID")
 	if !ok {
-		log.Println("no bot user id specified with SPLAT_BOT_USER_ID")
+		logrus.Warn("no bot user id specified with SPLAT_BOT_USER_ID")
 		return false
 	}
-	return strings.Contains(messageText, fmt.Sprintf("<@%s>", userID))
+	botSubstring := fmt.Sprintf("<@%s>", userID)
+	doesContain := strings.Contains(messageText, botSubstring)
+	logrus.Debugf("does text %s contain bot mention?; %s; %v", messageText, botSubstring, doesContain)
+	return doesContain
 }
 
 func StringsToBlockUnfurl(messages []string, useMarkdown, unfurlLinks bool) []slack.MsgOption {
-	messageBlocks := []slack.Block{}
+	var messageBlocks []slack.Block
 
 	for _, message := range messages {
 		messageBlocks = append(messageBlocks,
