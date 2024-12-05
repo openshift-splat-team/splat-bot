@@ -3,7 +3,7 @@ package knowledge
 import (
 	"context"
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,68 +96,52 @@ func IsStringMatch(asset data.KnowledgeAsset, str string) bool {
 var depth = 0
 
 func isTokenMatch(match *data.TokenMatch, tokens map[string]string) bool {
-	var padding string
 	if match.CompiledExpr != nil {
-		log.Printf("checking message against expression: %s", match.Expr)
+		log.Debugf("checking message against expression: %s", match.Expr)
 		result, err := expr.Run(match.CompiledExpr, map[string]interface{}{"tokens": tokens})
 		if err != nil {
-			log.Printf("unable to run expression on match condition: %v", err)
+			log.Warnf("unable to run expression on match condition: %v", err)
 			return false
 		}
 		return result.(bool)
 	}
-	if DEBUG_CONDITION_MATCHING {
-		depth++
-		padding := strings.Repeat("  ", depth)
-		log.Printf("%s+isTokenMatch", padding)
-	}
+	depth++
+	padding := strings.Repeat("  ", depth)
+	log.Debugf("%s+isTokenMatch", padding)
 	tokensMatch := true
 	or := match.Type == "or"
 
 	if len(match.Tokens) > 0 {
 		if or {
 			tokensMatch = util.TokensPresentOR(tokens, match.Tokens...)
-			if DEBUG_CONDITION_MATCHING {
-				log.Printf("%sdo any tokens match? %v", padding, tokensMatch)
-			}
+			log.Debugf("%sdo any tokens match? %v", padding, tokensMatch)
 		} else {
 			tokensMatch = util.TokensPresentAND(tokens, match.Tokens...)
-			if DEBUG_CONDITION_MATCHING {
-				log.Printf("%sdo all tokens match? %v", padding, tokensMatch)
-			}
+			log.Debugf("%sdo all tokens match? %v", padding, tokensMatch)
 		}
 	}
 
-	if DEBUG_CONDITION_MATCHING {
-		log.Printf("%stokensMatch: %t; number of match terms: %d", padding, tokensMatch, len(match.Terms))
-	}
+	log.Debugf("%stokensMatch: %t; number of match terms: %d", padding, tokensMatch, len(match.Terms))
 	if tokensMatch && len(match.Terms) > 0 {
 		satisfied := 0
 		for idx := range match.Terms {
 			tokenMatch := isTokenMatch(&match.Terms[idx], tokens)
 			if tokenMatch {
 				satisfied++
-				if DEBUG_CONDITION_MATCHING {
-					log.Printf("%s+term satisfied: %d", padding, satisfied)
-				}
+				log.Debugf("%s+term satisfied: %d", padding, satisfied)
 				if or {
-					if DEBUG_CONDITION_MATCHING {
-						log.Printf("%s+or term satisfied", padding)
-					}
+					log.Debugf("%s+or term satisfied", padding)
 					satisfied = len(match.Terms)
 					break
 				}
 			}
 		}
 		tokensMatch = satisfied == len(match.Terms)
-		if DEBUG_CONDITION_MATCHING {
-			log.Printf("%sall terms satisfied? %v", padding, tokensMatch)
-		}
+		log.Debugf("%sall terms satisfied? %v", padding, tokensMatch)
 	}
-	if DEBUG_CONDITION_MATCHING {
-		log.Printf("%s-tokensMatch: %t", padding, tokensMatch)
-		depth--
-	}
+
+	log.Debugf("%s-tokensMatch: %t", padding, tokensMatch)
+	depth--
 	match.Satisfied = tokensMatch
 	return tokensMatch
 }
@@ -190,7 +174,7 @@ func getChannelName(channelID string) (string, error) {
 func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent *slackevents.MessageEvent) ([]slack.MsgOption, error) {
 	var channel string
 	var err error
-	matches := []data.KnowledgeAsset{}
+	var matches []data.KnowledgeAsset
 
 	for idx, entry := range knowledgeAssets {
 		if !entry.WatchThreads && eventsAPIEvent.ThreadTimeStamp != "" {
@@ -237,7 +221,7 @@ func defaultKnowledgeHandler(ctx context.Context, args []string, eventsAPIEvent 
 		}
 	}
 
-	response := []slack.MsgOption{}
+	var response []slack.MsgOption
 	// TO-DO: how can we handle multiple matches? for now we'll just use the first one
 	if len(matches) > 0 {
 		match := matches[0]
@@ -284,7 +268,7 @@ func loadKnowledgeEntries(dir string) error {
 	}
 
 	for _, filePath := range files {
-		log.Printf("loading knowledge entry from %s", filePath)
+		log.Debugf("loading knowledge entry from %s", filePath)
 		knowledgeModel, err := os.ReadFile(filePath)
 		if err != nil {
 			return fmt.Errorf("error reading file %s: %v", filePath, err)
@@ -292,7 +276,7 @@ func loadKnowledgeEntries(dir string) error {
 		var asset data.KnowledgeAsset
 		err = yaml.Unmarshal([]byte(knowledgeModel), &asset)
 		if err != nil {
-			log.Printf("error unmarshalling file %s: %v", filePath, err)
+			log.Warnf("error unmarshalling file %s: %v", filePath, err)
 			continue
 		}
 		// if the name of a known platform appears in the path add platform specific terms
@@ -328,7 +312,7 @@ func init() {
 				break
 			}
 		}
-		log.Printf("containsAny: %v; %v", result, params[1].([]any))
+		log.Debugf("containsAny: %v; %v", result, params[1].([]any))
 		return result, nil
 	}))
 	exprOptions = append(exprOptions, expr.Function("containsAll", func(params ...any) (any, error) {
@@ -340,7 +324,7 @@ func init() {
 				break
 			}
 		}
-		log.Printf("containsAll: %v; %v", result, params[1].([]any))
+		log.Debugf("containsAll: %v; %v", result, params[1].([]any))
 		return result, nil
 	}))
 
@@ -352,8 +336,8 @@ func init() {
 	// TODO: Need way for local developers to be able to still start application if they are not testing knowledge stuff.
 	//       For now, we will disable the commands tha require this.
 	if err != nil {
-		fmt.Printf("error loading knowledge entries: %v", err)
-		fmt.Println("Skipping adding of knowledge-based actions.")
+		log.Debugf("error loading knowledge entries: %v", err)
+		log.Infof("Skipping adding of knowledge-based actions.")
 		return
 	}
 	commands.AddCommand(KnowledgeCommandAttributes)
@@ -365,8 +349,8 @@ var KnowledgeCommandAttributes = data.Attributes{
 	RequireMention:     false,
 	AllowNonSplatUsers: true,
 	MessageOfInterest: func(args []string, attribute data.Attributes, channel string) bool {
-		for _, enrty := range knowledgeEntries {
-			if enrty.MessageOfInterest(args, attribute, channel) {
+		for _, entry := range knowledgeEntries {
+			if entry.MessageOfInterest(args, attribute, channel) {
 				return true
 			}
 		}

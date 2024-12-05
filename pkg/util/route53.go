@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/aws/aws-sdk-go-v2/service/route53/types"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
 )
@@ -112,7 +112,7 @@ func InvokeRecordActionsFromVIPS(ctx context.Context, action types.ChangeAction,
 	}
 
 	changeID := result.ChangeInfo.Id
-	fmt.Println("Waiting for DNS change to complete...")
+	log.Infof("Waiting for DNS change to complete...")
 
 	for {
 		statusResult, err := svc.GetChange(context.TODO(), &route53.GetChangeInput{
@@ -122,10 +122,10 @@ func InvokeRecordActionsFromVIPS(ctx context.Context, action types.ChangeAction,
 			log.Fatalf("failed to get change status, %v", err)
 		}
 
-		fmt.Printf("Change status: %s\n", statusResult.ChangeInfo.Status)
+		log.Debugf("Change status: %s\n", statusResult.ChangeInfo.Status)
 
 		if statusResult.ChangeInfo.Status == types.ChangeStatusInsync {
-			fmt.Println("DNS change is complete.")
+			log.Infof("DNS change is complete.")
 			break
 		}
 
@@ -133,6 +133,6 @@ func InvokeRecordActionsFromVIPS(ctx context.Context, action types.ChangeAction,
 		time.Sleep(10 * time.Second)
 	}
 
-	fmt.Printf("ChangeInfo: %+v\n", result.ChangeInfo)
+	log.Debugf("ChangeInfo: %+v\n", result.ChangeInfo)
 	return nil
 }

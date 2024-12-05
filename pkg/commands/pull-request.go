@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"strings"
@@ -105,8 +105,8 @@ func init() {
 	}
 	// If key not found, disable command and log missing file.
 	if err != nil {
-		fmt.Printf("error loading knowledge entries: %v", err)
-		fmt.Println("Skipping adding of knowledge-based actions.")
+		log.Debugf("error loading knowledge entries: %v", err)
+		log.Infof("Skipping adding of knowledge-based actions.")
 		return
 	}
 	AddCommand(PullRequestAttributes)
@@ -249,7 +249,7 @@ func getGithubToken() (string, error) {
 	// load from a file
 	keyFile, err := key.FromFile(getGithubKeyPath())
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		log.Debugf("Error: %v\n", err)
 	}
 
 	// load from data
@@ -258,7 +258,7 @@ func getGithubToken() (string, error) {
 	// Create an App Config using the App ID and the private key
 	githubApp, err := app.NewConfig(githubID, keyFile)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		log.Debugf("Error: %v\n", err)
 	}
 
 	// Get an *http.Client
@@ -267,7 +267,7 @@ func getGithubToken() (string, error) {
 	// The client can be used to send authenticated requests
 	_, err = client.Get("https://api.github.com/app")
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		log.Debugf("Error: %v\n", err)
 	}
 
 	// Generate JWT
@@ -280,7 +280,7 @@ func getGithubToken() (string, error) {
 		})
 	tokenString, err := token.SignedString(keyFile)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		log.Debugf("Error: %v\n", err)
 	}
 
 	// Get device code
@@ -307,7 +307,7 @@ func getGithubToken() (string, error) {
 	tokenResp := GithubTokenResponse{}
 	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(&tokenResp); err != nil {
-		fmt.Printf("Error: %v\n", err)
+		log.Debugf("Error: %v\n", err)
 	}
 	gitToken := tokenResp.Token
 
@@ -385,13 +385,13 @@ func fetchPullRequests(args []string) ([]prstatus.PullRequest, error) {
 	}
 	githubClient, err := clientCreator(gitToken)
 	if err != nil {
-		fmt.Printf("Error creating github client: %v\n", err)
+		log.Debugf("Error creating github client: %v\n", err)
 		return nil, err
 	}
 	query := ConstructSearchQuery(args)
 	prList, err = QueryPullRequests(context.TODO(), githubClient, query)
 	if err != nil {
-		fmt.Printf("Failed to get PRs: %v\n", err)
+		log.Debugf("Failed to get PRs: %v\n", err)
 		return nil, err
 	}
 	return prList, nil

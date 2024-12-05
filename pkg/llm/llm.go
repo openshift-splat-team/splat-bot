@@ -3,7 +3,7 @@ package llm
 import (
 	"context"
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
@@ -20,7 +20,7 @@ func GetJiraIssueSummary(ctx context.Context, query string) (string, error) {
 		return "", fmt.Errorf("unable to get Jira client: %v", err)
 	}
 
-	issues, resp, err := client.Issue.Search("filter = \"SPLAT - updates in last week\"", nil)//util.GetIssuesInQuery(client, query)
+	issues, resp, err := client.Issue.Search("filter = \"SPLAT - updates in last week\"", nil) //util.GetIssuesInQuery(client, query)
 	if err != nil {
 		responseBody, _ := util.GetResponseBody(resp)
 		return "", fmt.Errorf("unable to get issues: %v\n\n%s", err, responseBody)
@@ -33,7 +33,6 @@ func GetJiraIssueSummary(ctx context.Context, query string) (string, error) {
 	}
 	return builder.String(), nil
 }
-
 
 // GenerateResponse generates a response from an ollama API endpoint
 func GenerateResponse(ctx context.Context, prompt string) (string, error) {
@@ -51,7 +50,7 @@ func GenerateResponse(ctx context.Context, prompt string) (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-      
+
 	timedCtx, cancel := context.WithTimeout(ctx, PROMPT_RESPONSE_TIMEOUT)
 	defer cancel()
 	completion, err := llms.GenerateFromSinglePrompt(timedCtx, llm, prompt)
@@ -59,10 +58,10 @@ func GenerateResponse(ctx context.Context, prompt string) (string, error) {
 		log.Fatal(err)
 	}
 	return completion, nil*/
-                        
+
 	//summay   := GetJiraIssueSummary(ctx, "SPLAT - updates in last wee
 	out, err := Completion(prompt)
-	
+
 	if err != nil {
 		return "", fmt.Errorf("unable to get completion: %v", err)
 	}

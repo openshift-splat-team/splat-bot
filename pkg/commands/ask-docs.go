@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
+	log "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"io"
@@ -24,7 +25,7 @@ var AskDocsAttributes = data.Attributes{
 			url = "http://localhost:8000/"
 		}
 
-		fmt.Printf("question: %v\n", args)
+		log.Debugf("question: %v\n", args)
 		question := args[1]
 
 		response := "sorry! I was unable to find an answer."

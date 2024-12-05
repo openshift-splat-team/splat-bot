@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/openshift-splat-team/jira-bot/cmd/issue"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"text/template"
 
 	"github.com/openshift-splat-team/splat-bot/data"
@@ -94,7 +94,7 @@ var CreateAttributes = data.Attributes{
 			Outcome:   "___",
 		}
 		url := util.GetThreadUrl(evt)
-		fmt.Printf("%v", args)
+		log.Debugf("%v", args)
 		summary := args[2]
 		outcome := ""
 
