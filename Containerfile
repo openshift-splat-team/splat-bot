@@ -7,4 +7,4 @@ RUN apt install libpcre3 libpcre3-dev -y
 COPY . .
 RUN ./hack/build.sh
 
-CMD ["./slack-bot" , "--slack-token-path", "/creds/token", "--slack-signing-secret-path", "/creds/secret"]
+CMD ["./slack-bot"]
