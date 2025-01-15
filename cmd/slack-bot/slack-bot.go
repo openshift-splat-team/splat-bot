@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/slack-go/slack"
 
@@ -19,7 +20,7 @@ import (
 	slackutil "github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack/socketmode"
 
-	"github.com/slack-go/slack/slackevents"
+	events "github.com/slack-go/slack/slackevents"
 )
 
 type CustomFormatter struct{}
@@ -73,7 +74,7 @@ func main() {
 			case socketmode.EventTypeConnected:
 				log.Infof("Connected to Slack with Socket Mode.")
 			case socketmode.EventTypeEventsAPI:
-				eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
+				eventsAPIEvent, ok := evt.Data.(events.EventsAPIEvent)
 				if !ok {
 					log.Warnf("ignored %+v\n", evt)
 					continue
