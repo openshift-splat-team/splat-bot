@@ -57,9 +57,7 @@ func init() {
 	AddCommand(HelpAttributes)
 	AddCommand(ProwAttributes)
 	AddCommand(ProwGraphAttributes)
-	AddCommand(ProviderSummaryAttributes)
 	AddCommand(CreateJiraWithThreadAttributes)
-	AddCommand(AskDocsAttributes)
 }
 
 func Initialize() error {

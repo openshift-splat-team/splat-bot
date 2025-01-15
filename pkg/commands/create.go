@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"text/template"
+
 	"github.com/openshift-splat-team/jira-bot/cmd/issue"
 	log "github.com/sirupsen/logrus"
-	"text/template"
 
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
@@ -96,10 +97,8 @@ var CreateAttributes = data.Attributes{
 		url := util.GetThreadUrl(evt)
 		log.Debugf("%v", args)
 		summary := args[2]
-		outcome := ""
 
 		if len(args) >= 4 {
-			outcome = args[3]
 			assistantCtx.Goal = args[2]
 			assistantCtx.Outcome = args[3]
 		}
@@ -121,38 +120,6 @@ var CreateAttributes = data.Attributes{
 		issueKey := issue.Key
 		issueURL := fmt.Sprintf("%s/browse/%s", JIRA_BASE_URL, issueKey)
 
-		if len(outcome) > 0 {
-			log.Print("requesting sample issue from LLM")
-			prompt, err := invokeTemplate(assistantTemplate, assistantCtx)
-			if err != nil {
-				return util.StringToBlock(fmt.Sprintf("unable to to process request template. error: %v", err), false), nil
-			}
-
-			handlePrompt, err := util.GenerateResponse(ctx, prompt)
-			if err != nil {
-				return util.StringToBlock(fmt.Sprintf("unable to handle assistant template. error: %v", err), false), nil
-			}
-
-			params := map[string]string{
-				"Sample": handlePrompt,
-			}
-			response, err := invokeTemplate(assistantResponse, params)
-			if err != nil {
-				return util.StringToBlock(fmt.Sprintf("unable to to process template. error: %v", err), false), nil
-			}
-
-			socketClient, err := util.GetClient()
-			if err != nil {
-				return nil, fmt.Errorf("unable to to process template. error: %v", err)
-			}
-
-			msgOptions := util.StringToBlock(response, false)
-
-			_, err = socketClient.PostEphemeral(evt.Channel, evt.User, msgOptions...)
-			if err != nil {
-				return nil, fmt.Errorf("unable to to process template. error: %v", err)
-			}
-		}
 		return util.StringToBlock(fmt.Sprintf("issue <%s|%s> created", issueURL, issueKey), false), nil
 	},
 	RequiredArgs: 3,
