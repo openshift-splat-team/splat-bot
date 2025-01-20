@@ -199,7 +199,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 			args = args[1:]
 		}
 
-		if checkForCommand(args, attribute, msg.Channel) {
+		if len(msg.Type) > 0 && checkForCommand(args, attribute, msg.Channel) {
 			log.Debugf("found command: %v", attribute.Commands)
 			// Now that we found command, make sure it can be used by current user.
 			if !attribute.AllowNonSplatUsers {
