@@ -139,6 +139,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 			Text:            appMentionEvent.Text,
 			TimeStamp:       appMentionEvent.TimeStamp,
 			ThreadTimeStamp: appMentionEvent.ThreadTimeStamp,
+			Type:            evt.Type,
 		}
 		log.Debugf("AppMentionEvent: %s; %s;\n%s", appMentionEvent.User, appMentionEvent.Channel, appMentionEvent.Text)
 	case *slackevents.MessageEvent:
@@ -198,7 +199,7 @@ func Handler(ctx context.Context, client util.SlackClientInterface, evt slackeve
 		if util.ContainsBotMention(msg.Text) {
 			args = args[1:]
 		}
-
+		log.Warnf("msg: %v\n", msg)
 		if len(msg.Type) > 0 && checkForCommand(args, attribute, msg.Channel) {
 			log.Debugf("found command: %v", attribute.Commands)
 			// Now that we found command, make sure it can be used by current user.

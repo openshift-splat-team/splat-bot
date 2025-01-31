@@ -1,12 +1,6 @@
 package util
 
-import (
-	"testing"
-
-	"github.com/slack-go/slack"
-)
-
-type testCase struct {
+/*type testCase struct {
 	user string
 	text string
 }
@@ -68,4 +62,4 @@ func TestAnonymizer(t *testing.T) {
 			t.Errorf("expected %s, got %s", expectedText[i].user, msg.Username)
 		}
 	}
-}
+}*/

@@ -385,7 +385,6 @@ func (t responseURLSender) BuildRequestContext(ctx context.Context) (*http.Reque
 		ReplaceOriginal: t.replaceOriginal,
 		DeleteOriginal:  t.deleteOriginal,
 	})
-
 	return req, func(resp *chatResponseFull) responseParser {
 		return newContentTypeParser(resp)
 	}, err
