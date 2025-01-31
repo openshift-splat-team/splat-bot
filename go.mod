@@ -16,7 +16,6 @@ require (
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/openshift-splat-team/jira-bot v0.0.0-20240306184102-ae0ce859cefa
 	github.com/openshift-splat-team/vsphere-capacity-manager v0.0.0-20240820152614-6bad54a3d5c8
-	github.com/openshift/must-gather-clean v0.0.2-0.20231124103907-ea6ee7996e42
 	github.com/prometheus/client_golang v1.18.0
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
 	github.com/sirupsen/logrus v1.9.3
@@ -69,7 +68,6 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
-	github.com/gijsbers/go-pcre v0.0.0-20161214203829-a84f3096ab3c // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
