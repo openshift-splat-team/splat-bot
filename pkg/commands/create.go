@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"text/template"
 
-	"github.com/openshift-splat-team/jira-bot/cmd/issue"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/openshift-splat-team/jira-bot/cmd/issue"
 	"github.com/openshift-splat-team/splat-bot/data"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
@@ -31,33 +32,12 @@ As an {{.Principal}} I want {{.Goal}} so {{.Outcome}}.
 issue created by splat-bot
 `
 
-const assistantTemplateSource = `You are an engineer who writes user stories. You take a principal, a goal, and a desired outcome to create a user story with a story, a description, and acceptance criteria. The principal is {{.Principal}}, the goal is {{.Goal}}, and the desired outcome is {{.Outcome}}.`
-
-const assistantTemplateResponse = `You provided enough information to attempt to generate a sample story based on the information provided.
-This sample story should provide a helpful starting point for your card. However, this is not a perfect system and you'll
-need to review and likely refine the sample to make sense.
-
-
-{{.Sample}}`
-
 var issueTemplate *template.Template
-var assistantTemplate *template.Template
-var assistantResponse *template.Template
 
 func init() {
 	var err error
 
 	issueTemplate, err = template.New("issue").Parse(issueTemplateSource)
-	if err != nil {
-		panic(err)
-	}
-
-	assistantTemplate, err = template.New("assistant").Parse(assistantTemplateSource)
-	if err != nil {
-		panic(err)
-	}
-
-	assistantResponse, err = template.New("assistantResponse").Parse(assistantTemplateResponse)
 	if err != nil {
 		panic(err)
 	}
@@ -89,6 +69,8 @@ var CreateAttributes = data.Attributes{
 		var description string
 		var err error
 
+		fmt.Fprintln(os.Stderr, "processing Jira Create")
+		fmt.Fprintf(os.Stderr, "evt: %+v", evt)
 		assistantCtx := assistantContext{
 			Principal: "OpenShift Engineer",
 			Goal:      "___",
@@ -119,7 +101,6 @@ var CreateAttributes = data.Attributes{
 		}
 		issueKey := issue.Key
 		issueURL := fmt.Sprintf("%s/browse/%s", JIRA_BASE_URL, issueKey)
-
 		return util.StringToBlock(fmt.Sprintf("issue <%s|%s> created", issueURL, issueKey), false), nil
 	},
 	RequiredArgs: 3,
