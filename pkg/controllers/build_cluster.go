@@ -1,8 +1,9 @@
 package controllers
 
 import (
-	log "github.com/sirupsen/logrus"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
@@ -13,7 +14,6 @@ import (
 )
 
 func init() {
-
 	if os.Getenv("UNIT") != "" {
 		log.Printf("!!! controllers are disabled for unit tests")
 		return
@@ -35,13 +35,13 @@ func init() {
 
 	if err := (&PoolReconciler{}).
 		SetupWithManager(mgr); err != nil {
-		log.Printf("unable to create controller: %v", err)
+		log.Printf("unable to create PoolReconciler: %v", err)
 		os.Exit(1)
 	}
 
 	if err := (&LeaseReconciler{}).
 		SetupWithManager(mgr); err != nil {
-		log.Printf("unable to create controller: %v", err)
+		log.Printf("unable to create LeaseReconciler: %v", err)
 		os.Exit(1)
 	}
 

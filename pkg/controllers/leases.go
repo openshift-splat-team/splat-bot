@@ -4,10 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	awstypes "github.com/aws/aws-sdk-go-v2/service/route53/types"
-	"github.com/openshift-splat-team/splat-bot/pkg/util"
-	log "github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/labels"
 	"os"
 	"strconv"
 	"strings"
@@ -15,10 +11,13 @@ import (
 	"text/tabwriter"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	awstypes "github.com/aws/aws-sdk-go-v2/service/route53/types"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	v1 "github.com/openshift-splat-team/vsphere-capacity-manager/pkg/apis/vspherecapacitymanager.splat.io/v1"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -33,17 +32,36 @@ const (
 	LeaseDisablePruningLabel = "vsphere-capacity-manager.splat-team.io/disable-pruning"
 	leaseTimeIncrement       = 8
 	maxRenews                = 3
-)
 
-const network_only_lease = "network-only-lease"
-const network_lease_details_sent = "network-lease-details-sent"
-const lease_details_sent = "lease-details-sent"
+	network_only_lease         = "network-only-lease"
+	network_lease_details_sent = "network-lease-details-sent"
+	lease_details_sent         = "lease-details-sent"
+
+	VcmNamespace = "vsphere-infra-helpers"
+)
 
 var (
 	leaseMu    sync.Mutex
 	leases     = make(map[string]*v1.Lease)
 	userLeases = make(map[string]*v1.Lease)
 )
+
+func GetPoolNames(ctx context.Context) ([]string, error) {
+	var poolNames []string
+	poolList := &v1.PoolList{}
+
+	if err := k8sclient.List(ctx, poolList, &client.ListOptions{
+		Namespace: VcmNamespace,
+	}); err != nil {
+		return poolNames, err
+	}
+
+	for _, pool := range poolList.Items {
+		poolNames = append(poolNames, pool.Name)
+	}
+
+	return poolNames, nil
+}
 
 func AcquireLease(ctx context.Context, user string, cpus, memory int, pool string, networks int) (*v1.Lease, error) {
 	leaseMu.Lock()
@@ -61,7 +79,7 @@ func AcquireLease(ctx context.Context, user string, cpus, memory int, pool strin
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "user-lease-",
-			Namespace:    "vsphere-infra-helpers",
+			Namespace:    VcmNamespace,
 			Annotations: map[string]string{
 				SplatBotLeaseOwner: user,
 			},
@@ -77,35 +95,38 @@ func AcquireLease(ctx context.Context, user string, cpus, memory int, pool strin
 		},
 	}
 	if networks > 1 {
-		log.Printf("creating network-only lease")
-		networkOnlyLease := &v1.Lease{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "v1",
-				Kind:       "Lease",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: "user-lease-",
-				Namespace:    "vsphere-infra-helpers",
-				Labels: map[string]string{
-					"network-only-lease": "true",
-					SplatBotLeaseOwner:   user,
+		for i := 1; i < networks; i++ {
+			log.Printf("creating network-only lease")
+			networkOnlyLease := &v1.Lease{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "Lease",
 				},
-				Annotations: map[string]string{
-					SplatBotLeaseOwner: user,
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "user-lease-",
+					Namespace:    VcmNamespace,
+					Labels: map[string]string{
+						"network-only-lease": "true",
+						SplatBotLeaseOwner:   user,
+					},
+					Annotations: map[string]string{
+						SplatBotLeaseOwner: user,
+					},
 				},
-			},
-			Spec: v1.LeaseSpec{
-				VCpus:        0,
-				Memory:       0,
-				Networks:     1,
-				RequiredPool: pool,
-			},
-		}
-		err := k8sclient.Create(ctx, networkOnlyLease)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create network-only lease: %w", err)
+				Spec: v1.LeaseSpec{
+					VCpus:        0,
+					Memory:       0,
+					Networks:     1,
+					RequiredPool: pool,
+				},
+			}
+			err := k8sclient.Create(ctx, networkOnlyLease)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create network-only lease: %w", err)
+			}
 		}
 	}
+	log.Infof("creating primary lease")
 	err := k8sclient.Create(ctx, lease)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create lease: %v", err)
@@ -129,14 +150,14 @@ func RemoveLease(ctx context.Context, user string) error {
 
 	err := k8sclient.List(ctx, leases, &client.ListOptions{
 		LabelSelector: labelSelector,
-		Namespace:     "vsphere-infra-helpers",
+		Namespace:     VcmNamespace,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to list leases: %w", err)
 	}
 	log.Printf("found %d leases to delete", len(leases.Items))
 	for _, lease := range leases.Items {
-		log.Debugf("removing lease %s\n", lease.Name)
+		log.Debugf("removing lease %s", lease.Name)
 		err = k8sclient.Delete(ctx, &lease)
 		if err != nil {
 			return fmt.Errorf("failed to delete lease: %v", err)
@@ -281,7 +302,7 @@ func (l *LeaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	if err := (l.userReconciler).
 		SetupWithManager(mgr); err != nil {
-		log.Printf("unable to create controller: %v", err)
+		log.Printf("[LeaseReconciler] unable to create controller: %v", err)
 	}
 
 	l.userLeasePruner(context.TODO())
@@ -461,6 +482,7 @@ func (l *LeaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		leases[lease.Name] = lease
 	} else {
 		leaseMu.Lock()
+		log.Infof("Handling delete of lease %v", lease.Name)
 		delete(leases, lease.Name)
 		for user, userLease := range userLeases {
 			if userLease.Name == lease.Name {
@@ -470,7 +492,8 @@ func (l *LeaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		}
 		leaseMu.Unlock()
 		if hasFinalizer(lease) {
-			if !hasLabel(lease, network_only_lease) {
+			// Check to see if lease is pending.  If so, then just continue since there is nothing to clean up.
+			if !hasLabel(lease, network_only_lease) && (lease.Status.Phase != "Pending" && lease.Status.Phase != "") {
 				network, err := l.userReconciler.getNetwork(ctx, lease)
 				if err != nil {
 					return ctrl.Result{}, fmt.Errorf("failed to get network: %w", err)

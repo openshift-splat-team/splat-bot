@@ -3,6 +3,9 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
+
 	v1 "github.com/openshift-splat-team/vsphere-capacity-manager/pkg/apis/vspherecapacitymanager.splat.io/v1"
 	log "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
@@ -12,8 +15,6 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
-	"sync"
 )
 
 var (
@@ -27,7 +28,7 @@ func SetPoolSchedulable(ctx context.Context, name string, schedulable bool) erro
 	name = strings.ReplaceAll(name, "<http://vcenter.ci|vcenter.ci>", "vcenter.ci")
 	err := k8sclient.Get(ctx, types.NamespacedName{
 		Name:      name,
-		Namespace: "vsphere-infra-helpers"}, pool)
+		Namespace: VcmNamespace}, pool)
 	if err != nil {
 		return fmt.Errorf("could not get pool %s: %v", name, err)
 	}
