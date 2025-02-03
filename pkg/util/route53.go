@@ -3,13 +3,14 @@ package util
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	log "github.com/sirupsen/logrus"
-	"os"
-	"time"
 )
 
 func InvokeRecordActionsFromVIPS(ctx context.Context, action types.ChangeAction, vips []string, domainName string) error {

@@ -3,9 +3,6 @@ package github
 import (
 	"crypto/rsa"
 	"fmt"
-	"github.com/dgrijalva/jwt-go/v4"
-	"k8s.io/test-infra/ghproxy/ghcache"
-	"k8s.io/test-infra/prow/github"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -14,6 +11,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/dgrijalva/jwt-go/v4"
+	"k8s.io/test-infra/ghproxy/ghcache"
+	"k8s.io/test-infra/prow/github"
 )
 
 var installationPath = regexp.MustCompile(`^/repos/[^/]+/[^/]+/installation$`)

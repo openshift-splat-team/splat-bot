@@ -3,9 +3,10 @@ package llm
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/openshift-splat-team/jira-bot/pkg/util"
 )

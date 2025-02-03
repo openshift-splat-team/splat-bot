@@ -2,6 +2,7 @@ package github
 
 import (
 	"encoding/json"
+
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/test-infra/prow/github"
 )

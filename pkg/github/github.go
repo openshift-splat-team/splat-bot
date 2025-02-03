@@ -3,6 +3,10 @@ package github
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"sync"
+	"time"
+
 	githubql "github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -10,9 +14,6 @@ import (
 	"k8s.io/test-infra/prow/config/secret"
 	"k8s.io/test-infra/prow/github"
 	"k8s.io/test-infra/prow/throttle"
-	"net/http"
-	"sync"
-	"time"
 )
 
 const (

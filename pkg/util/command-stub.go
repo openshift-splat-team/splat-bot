@@ -8,11 +8,12 @@ import (
 
 var (
 	channelIDMaptest = map[string]string{
-		"test": "test",
+		"test":   "test",
 		"random": "random",
 		"vmware": "vmware",
 	}
 )
+
 type SlackClientInterface interface {
 	PostEphemeral(channelID string, userID string, options ...slack.MsgOption) (string, error)
 	PostMessage(channelID string, options ...slack.MsgOption) (string, string, error)

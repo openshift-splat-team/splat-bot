@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"regexp"
 	"strings"
 	"sync"
 	"text/tabwriter"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"

@@ -3,10 +3,11 @@ package knowledge
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/expr-lang/expr"
 	"github.com/openshift-splat-team/splat-bot/data"
