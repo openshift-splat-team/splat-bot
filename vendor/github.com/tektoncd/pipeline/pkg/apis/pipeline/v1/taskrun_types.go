@@ -15,12 +15,12 @@ package v1
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	apisconfig "github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
+	pipelineErrors "github.com/tektoncd/pipeline/pkg/apis/pipeline/errors"
 	pod "github.com/tektoncd/pipeline/pkg/apis/pipeline/pod"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,12 +37,14 @@ type TaskRunSpec struct {
 	Debug *TaskRunDebug `json:"debug,omitempty"`
 	// +optional
 	// +listType=atomic
-	Params []Param `json:"params,omitempty"`
+	Params Params `json:"params,omitempty"`
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName"`
 	// no more than one of the TaskRef and TaskSpec may be specified.
 	// +optional
 	TaskRef *TaskRef `json:"taskRef,omitempty"`
+	// Specifying PipelineSpec can be disabled by setting
+	// `disable-inline-spec` feature flag..
 	// +optional
 	TaskSpec *TaskSpec `json:"taskSpec,omitempty"`
 	// Used for cancelling a TaskRun (and maybe more later on)
@@ -55,7 +57,6 @@ type TaskRunSpec struct {
 	// +optional
 	Retries int `json:"retries,omitempty"`
 	// Time after which one retry attempt times out. Defaults to 1 hour.
-	// Specified build timeout should be less than 24h.
 	// Refer Go's ParseDuration documentation for expected format: https://golang.org/pkg/time/#ParseDuration
 	// +optional
 	Timeout *metav1.Duration `json:"timeout,omitempty"`
@@ -103,18 +104,48 @@ const (
 	TaskRunCancelledByPipelineTimeoutMsg TaskRunSpecStatusMessage = "TaskRun cancelled as the PipelineRun it belongs to has timed out."
 )
 
+const (
+	// EnabledOnFailureBreakpoint is the value for TaskRunDebug.Breakpoints.OnFailure that means the breakpoint onFailure is enabled
+	EnabledOnFailureBreakpoint = "enabled"
+)
+
 // TaskRunDebug defines the breakpoint config for a particular TaskRun
 type TaskRunDebug struct {
 	// +optional
-	// +listType=atomic
-	Breakpoint []string `json:"breakpoint,omitempty"`
+	Breakpoints *TaskBreakpoints `json:"breakpoints,omitempty"`
+}
+
+// TaskBreakpoints defines the breakpoint config for a particular Task
+type TaskBreakpoints struct {
+	// if enabled, pause TaskRun on failure of a step
+	// failed step will not exit
+	// +optional
+	OnFailure string `json:"onFailure,omitempty"`
+}
+
+// NeedsDebugOnFailure return true if the TaskRun is configured to debug on failure
+func (trd *TaskRunDebug) NeedsDebugOnFailure() bool {
+	if trd.Breakpoints == nil {
+		return false
+	}
+	return trd.Breakpoints.OnFailure == EnabledOnFailureBreakpoint
+}
+
+// StepNeedsDebug return true if the step is configured to debug
+func (trd *TaskRunDebug) StepNeedsDebug(stepName string) bool {
+	return trd.NeedsDebugOnFailure()
+}
+
+// NeedsDebug return true if defined onfailure or have any before, after steps
+func (trd *TaskRunDebug) NeedsDebug() bool {
+	return trd.NeedsDebugOnFailure()
 }
 
 // TaskRunInputs holds the input values that this task was invoked with.
 type TaskRunInputs struct {
 	// +optional
 	// +listType=atomic
-	Params []Param `json:"params,omitempty"`
+	Params Params `json:"params,omitempty"`
 }
 
 var taskRunCondSet = apis.NewBatchConditionSet()
@@ -150,12 +181,32 @@ const (
 	// TaskRunReasonResolvingTaskRef indicates that the TaskRun is waiting for
 	// its taskRef to be asynchronously resolved.
 	TaskRunReasonResolvingTaskRef = "ResolvingTaskRef"
+	// TaskRunReasonResolvingStepActionRef indicates that the TaskRun is waiting for
+	// its StepAction's Ref to be asynchronously resolved.
+	TaskRunReasonResolvingStepActionRef = "ResolvingStepActionRef"
 	// TaskRunReasonImagePullFailed is the reason set when the step of a task fails due to image not being pulled
 	TaskRunReasonImagePullFailed TaskRunReason = "TaskRunImagePullFailed"
 	// TaskRunReasonResultLargerThanAllowedLimit is the reason set when one of the results exceeds its maximum allowed limit of 1 KB
 	TaskRunReasonResultLargerThanAllowedLimit TaskRunReason = "TaskRunResultLargerThanAllowedLimit"
 	// TaskRunReasonStopSidecarFailed indicates that the sidecar is not properly stopped.
-	TaskRunReasonStopSidecarFailed = "TaskRunStopSidecarFailed"
+	TaskRunReasonStopSidecarFailed TaskRunReason = "TaskRunStopSidecarFailed"
+	// TaskRunReasonInvalidParamValue indicates that the TaskRun Param input value is not allowed.
+	TaskRunReasonInvalidParamValue TaskRunReason = "InvalidParamValue"
+	// TaskRunReasonFailedResolution indicated that the reason for failure status is
+	// that references within the TaskRun could not be resolved
+	TaskRunReasonFailedResolution TaskRunReason = "TaskRunResolutionFailed"
+	// TaskRunReasonFailedValidation indicated that the reason for failure status is
+	// that taskrun failed runtime validation
+	TaskRunReasonFailedValidation TaskRunReason = "TaskRunValidationFailed"
+	// TaskRunReasonTaskFailedValidation indicated that the reason for failure status is
+	// that task failed runtime validation
+	TaskRunReasonTaskFailedValidation TaskRunReason = "TaskValidationFailed"
+	// TaskRunReasonResourceVerificationFailed indicates that the task fails the trusted resource verification,
+	// it could be the content has changed, signature is invalid or public key is invalid
+	TaskRunReasonResourceVerificationFailed TaskRunReason = "ResourceVerificationFailed"
+	// TaskRunReasonFailureIgnored is the reason set when the Taskrun has failed due to pod execution error and the failure is ignored for the owning PipelineRun.
+	// TaskRuns failed due to reconciler/validation error should not use this reason.
+	TaskRunReasonFailureIgnored TaskRunReason = "FailureIgnored"
 )
 
 func (t TaskRunReason) String() string {
@@ -193,7 +244,7 @@ func (trs *TaskRunStatus) MarkResourceFailed(reason TaskRunReason, err error) {
 		Type:    apis.ConditionSucceeded,
 		Status:  corev1.ConditionFalse,
 		Reason:  reason.String(),
-		Message: err.Error(),
+		Message: pipelineErrors.GetErrorMessage(err),
 	})
 	succeeded := trs.GetCondition(apis.ConditionSucceeded)
 	trs.CompletionTime = &succeeded.LastTransitionTime.Inner
@@ -239,6 +290,9 @@ type TaskRunStatusFields struct {
 	// Provenance contains some key authenticated metadata about how a software artifact was built (what sources, what inputs/outputs, etc.).
 	// +optional
 	Provenance *Provenance `json:"provenance,omitempty"`
+
+	// SpanContext contains tracing span context fields
+	SpanContext map[string]string `json:"spanContext,omitempty"`
 }
 
 // TaskRunStepSpec is used to override the values of a Step in the corresponding Task.
@@ -301,9 +355,13 @@ func (trs *TaskRunStatus) SetCondition(newCond *apis.Condition) {
 // StepState reports the results of running a step in a Task.
 type StepState struct {
 	corev1.ContainerState `json:",inline"`
-	Name                  string `json:"name,omitempty"`
-	Container             string `json:"container,omitempty"`
-	ImageID               string `json:"imageID,omitempty"`
+	Name                  string                `json:"name,omitempty"`
+	Container             string                `json:"container,omitempty"`
+	ImageID               string                `json:"imageID,omitempty"`
+	Results               []TaskRunStepResult   `json:"results,omitempty"`
+	TerminationReason     string                `json:"terminationReason,omitempty"`
+	Inputs                []TaskRunStepArtifact `json:"inputs,omitempty"`
+	Outputs               []TaskRunStepArtifact `json:"outputs,omitempty"`
 }
 
 // SidecarState reports the results of running a sidecar in a Task.
@@ -351,7 +409,7 @@ func (tr *TaskRun) GetPipelineRunPVCName() string {
 	}
 	for _, ref := range tr.GetOwnerReferences() {
 		if ref.Kind == pipeline.PipelineRunControllerName {
-			return fmt.Sprintf("%s-pvc", ref.Name)
+			return ref.Name + "-pvc"
 		}
 	}
 	return ""
@@ -378,9 +436,14 @@ func (tr *TaskRun) HasStarted() bool {
 	return tr.Status.StartTime != nil && !tr.Status.StartTime.IsZero()
 }
 
-// IsSuccessful returns true if the TaskRun's status indicates that it is done.
+// IsSuccessful returns true if the TaskRun's status indicates that it has succeeded.
 func (tr *TaskRun) IsSuccessful() bool {
 	return tr != nil && tr.Status.GetCondition(apis.ConditionSucceeded).IsTrue()
+}
+
+// IsFailure returns true if the TaskRun's status indicates that it has failed.
+func (tr *TaskRun) IsFailure() bool {
+	return tr != nil && tr.Status.GetCondition(apis.ConditionSucceeded).IsFalse()
 }
 
 // IsCancelled returns true if the TaskRun's spec status is set to Cancelled state
@@ -412,7 +475,7 @@ func (tr *TaskRun) GetTimeout(ctx context.Context) time.Duration {
 	// Use the platform default is no timeout is set
 	if tr.Spec.Timeout == nil {
 		defaultTimeout := time.Duration(config.FromContextOrDefaults(ctx).Defaults.DefaultTimeoutMinutes)
-		return defaultTimeout * time.Minute
+		return defaultTimeout * time.Minute //nolint:durationcheck
 	}
 	return tr.Spec.Timeout.Duration
 }
