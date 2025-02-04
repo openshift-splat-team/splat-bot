@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/test-infra/prow/github"
+	"sigs.k8s.io/prow/pkg/github"
 )
 
 // User is a GitHub user account.

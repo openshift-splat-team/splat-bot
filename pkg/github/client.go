@@ -19,8 +19,8 @@ import (
 	githubql "github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/test-infra/prow/github"
-	"k8s.io/test-infra/prow/version"
+	"sigs.k8s.io/prow/pkg/github"
+	"sigs.k8s.io/prow/pkg/version"
 )
 
 type key string
@@ -41,6 +41,21 @@ type client struct {
 	used       bool
 	mutUsed    sync.Mutex // protects used
 	*delegate
+}
+
+func (c *client) ListTags(org, repo string) ([]github.GitHubTag, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *client) CreateCheckRun(org, repo string, checkRun github.CheckRun) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *client) UpdateCheckRun(org, repo string, checkRunId int64, checkRun github.CheckRun) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (c *client) EditPullRequest(org, repo string, number int, pr *github.PullRequest) (*github.PullRequest, error) {
@@ -304,11 +319,6 @@ func (c *client) DeleteRef(org, repo, ref string) error {
 }
 
 func (c *client) ListFileCommits(org, repo, path string) ([]github.RepositoryCommit, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c *client) CreateCheckRun(org, repo string, checkRun github.CheckRun) error {
 	//TODO implement me
 	panic("implement me")
 }

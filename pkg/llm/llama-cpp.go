@@ -9,13 +9,12 @@ import (
 	llamacpp "github.com/openshift-splat-team/splat-bot/data/llm/llama_cpp"
 )
 
-
 const DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant. Your top priority is accuracy using the information you're given."
 const DEFAULT_PORT = 8080
-//const DEFAULT_HOST = "192.168.0.145"
+
+// const DEFAULT_HOST = "192.168.0.145"
 const DEFAULT_HOST = "localhost"
 
-// 
 var urlTemplate = "http://%s:%d/v1/chat/completions"
 
 func Completion(content string) (*llamacpp.ChatCompletion, error) {

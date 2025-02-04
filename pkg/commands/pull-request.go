@@ -12,19 +12,17 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/openshift-splat-team/splat-bot/data"
-	"github.com/slack-go/slack"
-	"github.com/slack-go/slack/slackevents"
-	"k8s.io/test-infra/prow/github"
-	"k8s.io/test-infra/prow/prstatus"
-
-	splathub "github.com/openshift-splat-team/splat-bot/pkg/github"
-	"github.com/openshift-splat-team/splat-bot/pkg/util"
-
 	"github.com/beatlabs/github-auth/app"
 	"github.com/beatlabs/github-auth/key"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/openshift-splat-team/splat-bot/data"
+	splathub "github.com/openshift-splat-team/splat-bot/pkg/github"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	githubql "github.com/shurcooL/githubv4"
+	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
+	"sigs.k8s.io/prow/pkg/github"
+	"sigs.k8s.io/prow/pkg/prstatus"
 )
 
 const (

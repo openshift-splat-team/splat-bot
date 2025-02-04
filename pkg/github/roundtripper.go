@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go/v4"
-	"k8s.io/test-infra/ghproxy/ghcache"
-	"k8s.io/test-infra/prow/github"
+	"sigs.k8s.io/prow/pkg/ghcache"
+	"sigs.k8s.io/prow/pkg/github"
 )
 
 var installationPath = regexp.MustCompile(`^/repos/[^/]+/[^/]+/installation$`)
