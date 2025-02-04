@@ -10,8 +10,7 @@ echo KUBEBUILDER_ASSETS=$KUBEBUILDER_ASSETS
 
 GINKGO=${GINKGO:-"go run ${REPO_ROOT}/vendor/github.com/onsi/ginkgo/v2/ginkgo"}
 GINKGO_ARGS=${GINKGO_ARGS:-"-v --randomize-all --randomize-suites --keep-going --race --trace --timeout=10m"}
-#GINKGO_ARGS=${GINKGO_ARGS:-"-v --trace --timeout=10m"}
-GINKGO_EXTRA_ARGS=${GINKGO_EXTRA_ARGS:-"UNIT=TRUE"}
+GINKGO_EXTRA_ARGS=${GINKGO_EXTRA_ARGS:-""}
 
 # Ensure that some home var is set and that it's not the root.
 # This is required for the kubebuilder cache.
