@@ -3,16 +3,17 @@ package github
 import (
 	"context"
 	"fmt"
-	githubql "github.com/shurcooL/githubv4"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
-	"k8s.io/test-infra/ghproxy/ghcache"
-	"k8s.io/test-infra/prow/config/secret"
-	"k8s.io/test-infra/prow/github"
-	"k8s.io/test-infra/prow/throttle"
 	"net/http"
 	"sync"
 	"time"
+
+	githubql "github.com/shurcooL/githubv4"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
+	"sigs.k8s.io/prow/pkg/ghcache"
+	"sigs.k8s.io/prow/pkg/github"
+	"sigs.k8s.io/prow/pkg/secretutil"
+	"sigs.k8s.io/prow/pkg/throttle"
 )
 
 const (
@@ -146,8 +147,9 @@ func (o *GitHubOptions) GitHubClientWithAccessToken(token string) (github.Client
 
 // baseClientOptions populates client options that are derived from flags without processing
 func (o *GitHubOptions) baseClientOptions() github.ClientOptions {
+	censorer := secretutil.NewCensorer()
 	return github.ClientOptions{
-		Censor:          secret.Censor,
+		Censor:          secretutil.AdaptCensorer(censorer),
 		AppID:           o.AppID,
 		GraphqlEndpoint: o.GraphqlEndpoint,
 		Bases:           o.Endpoint.Strings(),

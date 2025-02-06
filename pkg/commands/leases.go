@@ -2,17 +2,18 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 
-	"github.com/openshift-splat-team/splat-bot/pkg/controllers"
-
-	"github.com/openshift-splat-team/splat-bot/data"
-	"github.com/openshift-splat-team/splat-bot/pkg/util"
+	log "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+
+	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/controllers"
+	"github.com/openshift-splat-team/splat-bot/pkg/util"
 )
 
 func init() {
@@ -47,7 +48,8 @@ func getLeaseOptions(args []string) leaseOptions {
 			case "networks":
 				networks, _ = strconv.Atoi(parts[1])
 			case "pools":
-				pools = parts[1]
+				// Need to remove the double quotes if added for multiple pools
+				pools = strings.Replace(parts[1], "\"", "", -1)
 			}
 		}
 	}
@@ -57,6 +59,29 @@ func getLeaseOptions(args []string) leaseOptions {
 		networks: networks,
 		pool:     pools,
 	}
+}
+
+func validateLeaseOptions(ctx context.Context, options leaseOptions) error {
+	// Validate the pool names.  An incorrect pool name will lead to a bad time
+	if len(options.pool) > 0 {
+		pools, err := controllers.GetPoolNames(ctx)
+		if err != nil {
+			return err
+		}
+
+		found := false
+		for _, curPool := range pools {
+			if curPool == options.pool {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return errors.New("pool not found")
+		}
+	}
+	return nil
 }
 
 var LeasesAttributes = data.Attributes{
@@ -69,6 +94,10 @@ var LeasesAttributes = data.Attributes{
 			switch args[2] {
 			case "acquire":
 				options := getLeaseOptions(args)
+
+				if err = validateLeaseOptions(ctx, options); err != nil {
+					return util.StringToBlock(err.Error(), false), fmt.Errorf("failed to acquire lease: %w", err)
+				}
 
 				_, err := controllers.AcquireLease(ctx, evt.User, options.cpus, options.memory, options.pool, options.networks)
 				if err != nil {

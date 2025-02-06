@@ -2,9 +2,10 @@ package github
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"net/http"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 var knownAuthTypes = sets.New[string]("bearer", "basic", "negotiate")

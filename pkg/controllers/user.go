@@ -4,23 +4,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	awstypes "github.com/aws/aws-sdk-go-v2/service/route53/types"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"time"
 
+	awstypes "github.com/aws/aws-sdk-go-v2/service/route53/types"
+	log "github.com/sirupsen/logrus"
+
+	"strings"
+
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	v1 "github.com/openshift-splat-team/vsphere-capacity-manager/pkg/apis/vspherecapacitymanager.splat.io/v1"
 	"github.com/slack-go/slack"
-	"github.com/slack-go/slack/socketmode"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 type UserReconciler struct {
@@ -52,7 +53,7 @@ type UserReconciler struct {
 
 	domainName string
 	// client slack client
-	client *socketmode.Client
+	client util.SlackClientInterface
 }
 
 func (l *UserReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -62,7 +63,7 @@ func (l *UserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	l.Scheme = mgr.GetScheme()
 	l.Recorder = mgr.GetEventRecorderFor("pools-controller")
 	l.RESTMapper = mgr.GetRESTMapper()
-	slackClient, err := util.GetClient()
+	slackClient, err := util.GetSlackClient()
 	if err != nil {
 		return fmt.Errorf("unable to get slack client: %v", err)
 	}
@@ -275,7 +276,7 @@ func (l *UserReconciler) getNetwork(ctx context.Context, lease *v1.Lease) (*v1.N
 		if ownerRef.Kind != v1.NetworkKind {
 			continue
 		}
-		err := l.Client.Get(ctx, types.NamespacedName{Namespace: "vsphere-infra-helpers", Name: ownerRef.Name}, &network)
+		err := l.Client.Get(ctx, types.NamespacedName{Namespace: VcmNamespace, Name: ownerRef.Name}, &network)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get network object: %v", err)
 		}
@@ -284,6 +285,7 @@ func (l *UserReconciler) getNetwork(ctx context.Context, lease *v1.Lease) (*v1.N
 	}
 	return nil, fmt.Errorf("no network object found for lease: %s", lease.Name)
 }
+
 func (l *UserReconciler) Reconcile() {
 	ctx := context.Background()
 	//nolint:gosimple

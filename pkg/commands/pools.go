@@ -3,9 +3,9 @@ package commands
 import (
 	"context"
 	"fmt"
-	"github.com/openshift-splat-team/splat-bot/pkg/controllers"
 
 	"github.com/openshift-splat-team/splat-bot/data"
+	"github.com/openshift-splat-team/splat-bot/pkg/controllers"
 	"github.com/openshift-splat-team/splat-bot/pkg/util"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"

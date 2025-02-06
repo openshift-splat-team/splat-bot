@@ -1,7 +1,6 @@
 package v1
 
 import (
-	configv1 "github.com/openshift/api/config/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -58,7 +57,7 @@ type LeaseSpec struct {
 	// are only used by one CI jobs.  multi-tenant networks reside on a
 	// VLAN which may be used by multiple jobs.  disconnected networks aren't yet
 	// supported.
-	// +kubebuilder:validation:Enum="";disconnected;single-tenant;multi-tenant
+	// +kubebuilder:validation:Enum="";disconnected;single-tenant;multi-tenant;nested-multi-tenant;public-ipv6
 	// +kubebuilder:default=single-tenant
 	// +optional
 	NetworkType NetworkType `json:"network-type"`
@@ -70,7 +69,7 @@ type LeaseSpec struct {
 
 // LeaseStatus defines the status for a lease
 type LeaseStatus struct {
-	configv1.VSpherePlatformFailureDomainSpec `json:",inline"`
+	FailureDomainSpec `json:",inline"`
 
 	// EnvVars a freeform string which contains bash which is to be sourced
 	// by the holder of the lease.

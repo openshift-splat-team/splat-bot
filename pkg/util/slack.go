@@ -81,6 +81,16 @@ func GetClient() (*socketmode.Client, error) {
 	return client, nil
 }
 
+func GetSlackClient() (SlackClientInterface, error) {
+	if os.Getenv("UNIT") != "" {
+		testClient := &StubInterface{}
+		return testClient, nil
+	} else {
+		return GetClient()
+	}
+
+}
+
 func AnonymizeMessages(msgs []slack.Message) []slack.Message {
 	// opMap := map[string]string{}
 
