@@ -98,7 +98,7 @@ func main() {
 				if err := json.NewEncoder(buffer).Encode(data); err != nil {
 					log.Warnf("Error: %v", err)
 				} else {
-					log.Debugf(buffer.String())
+					log.Debugln(buffer.String())
 				}
 
 				// For now, only close if text of action
